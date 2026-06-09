@@ -22,7 +22,7 @@ Deck de 38 cartes. Effet selon le nombre d'exemplaires de la carte dans votre zo
 | Acolyte | +4 | - | - | 1 |
 | Taupe | -3 | - | - | 1 |
 
-Tour: le joueur actif joue 2 cartes (1 face visible, 1 face cachee, differentes sauf main identique), avec defausse optionnelle (max 4 par joueur). L'adversaire recrute une des 2 cartes, le joueur actif prend l'autre. Les deux pions bougent simultanement. Conditions de fin verifiees dans l'ordre: rattrapage > 3 Cryptologues (victoire) > 3 Risque-tout (defaite); egalite tranchee en faveur du joueur actif. Pioche vide: le pion le plus proche de rattraper gagne, egalite au joueur actif.
+Tour: le joueur actif joue 2 cartes (1 face visible, 1 face cachee, differentes sauf main identique). L'adversaire recrute une des 2 cartes, le joueur actif prend l'autre. Les deux pions bougent simultanement. Conditions de fin verifiees dans l'ordre: rattrapage > 3 Cryptologues (victoire) > 3 Risque-tout (defaite); egalite tranchee en faveur du joueur actif. Pioche vide: le pion le plus proche de rattraper gagne, egalite au joueur actif.
 
 La logique pure et ces regles sont couvertes par `server/src/game.test.ts` (18 cas).
 
@@ -102,4 +102,4 @@ server/                  Backend Hono (Bun)
 1. `POST /api/create` cree une room et renvoie un code a 4 lettres.
 2. Chaque client ouvre `GET /ws?code=XXXX&cid=<id>`. Les deux premiers `cid` distincts recoivent les sieges `p1` et `p2`; le `cid` persiste en `localStorage` pour conserver son siege a la reconnexion.
 3. Le serveur garde l'etat autoritatif en memoire et diffuse a chaque client une **projection** (`PlayerView`) qui masque la main adverse et la carte face cachee non encore revelee.
-4. Les actions (`start`, `discard`, `play`, `recruit`, `reset`) transitent par le WebSocket; le serveur valide, applique, puis rediffuse l'etat.
+4. Les actions (`start`, `play`, `recruit`, `reset`) transitent par le WebSocket; le serveur valide, applique, puis rediffuse l'etat.
