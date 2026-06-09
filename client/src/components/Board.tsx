@@ -6,104 +6,138 @@ interface BoardProps {
   view: PlayerView;
 }
 
-const XL = 8;
-const XR = 92;
-const YT = 8;
-const YB = 92;
-const W = XR - XL;
-const H = YB - YT;
-const PERIM = 2 * (W + H);
+// Stadium (oblong) geometry in SVG user units. Cell 0 sits at the left apex
+// (player 1's house) and cell 7 at the right apex (player 2's house), exactly
+// opposite as on the physical board.
+const VBW = 340;
+const VBH = 210;
+const R = 79;
+const CXL = 105; // left semicircle centre
+const CXR = 235; // right semicircle centre
+const CY = 105;
+const LX = CXR - CXL; // straight run length
+const S1 = (Math.PI * R) / 2; // upper-left quarter
+const S2 = LX; // top straight
+const S3 = Math.PI * R; // right semicircle
+const S4 = LX; // bottom straight
+const PERIM = 2 * LX + 2 * Math.PI * R;
 
-// Map a track index (0..13) to a point on the rectangle perimeter, clockwise
-// from the top-left corner. Percentage coordinates within the board.
-function perimeterPoint(index: number): { x: number; y: number } {
+// Point at perimeter index (0..13), walking clockwise from the left apex.
+function cellPoint(index: number): { x: number; y: number } {
   const d = (index / BOARD_CELLS) * PERIM;
-  if (d <= W) return { x: XL + d, y: YT };
-  if (d <= W + H) return { x: XR, y: YT + (d - W) };
-  if (d <= 2 * W + H) return { x: XR - (d - (W + H)), y: YB };
-  return { x: XL, y: YB - (d - (2 * W + H)) };
+  if (d <= S1) {
+    const a = Math.PI + (d / S1) * (Math.PI / 2); // left apex -> top-left
+    return { x: CXL + R * Math.cos(a), y: CY + R * Math.sin(a) };
+  }
+  if (d <= S1 + S2) {
+    return { x: CXL + (d - S1), y: CY - R }; // top straight
+  }
+  if (d <= S1 + S2 + S3) {
+    const a = 1.5 * Math.PI + ((d - S1 - S2) / S3) * Math.PI; // right semicircle
+    return { x: CXR + R * Math.cos(a), y: CY + R * Math.sin(a) };
+  }
+  if (d <= S1 + S2 + S3 + S4) {
+    return { x: CXR - (d - S1 - S2 - S3), y: CY + R }; // bottom straight
+  }
+  const a = 0.5 * Math.PI + ((d - S1 - S2 - S3 - S4) / S1) * (Math.PI / 2); // lower-left quarter
+  return { x: CXL + R * Math.cos(a), y: CY + R * Math.sin(a) };
 }
 
 const Board: Component<BoardProps> = (props) => {
   const cells = createMemo(() =>
-    Array.from({ length: BOARD_CELLS }, (_, i) => ({ i, ...perimeterPoint(i) }))
+    Array.from({ length: BOARD_CELLS }, (_, i) => ({ i, ...cellPoint(i) }))
   );
 
   const you = () => props.view.you;
-  const chip = (pid: PlayerId) =>
-    you() === pid
-      ? { base: '#d8b25a', edge: '#a9823f' }
-      : { base: '#c0504a', edge: '#8c3a35' };
-  const pawnPoint = (pid: PlayerId) => perimeterPoint(props.view.positions[pid]);
+  const colorFor = (pid: PlayerId) => (you() === pid ? '#e8c170' : '#4aa3df');
+  const pawnPoint = (pid: PlayerId) => cellPoint(props.view.positions[pid]);
 
   return (
-    <div class="absolute inset-0">
-      {/* Inlaid felt track */}
-      <div
-        class="absolute rounded-[1.5rem]"
-        style={{
-          left: `${XL}%`,
-          top: `${YT}%`,
-          width: `${W}%`,
-          height: `${H}%`,
-          background: 'rgba(0,0,0,0.10)',
-          border: '2px solid rgba(202,161,90,0.5)',
-          'box-shadow':
-            'inset 0 2px 8px rgba(0,0,0,0.45), inset 0 0 0 5px rgba(0,0,0,0.06), 0 1px 0 rgba(255,255,255,0.06)',
-        }}
-      />
+    <div class="absolute inset-0 flex items-center justify-center px-2">
+      <svg
+        viewBox={`0 0 ${VBW} ${VBH}`}
+        class="w-full h-full"
+        preserveAspectRatio="xMidYMid meet"
+        aria-label="Plateau de jeu"
+      >
+        {/* Track surface (road) */}
+        <rect
+          x={CXL - R}
+          y={CY - R}
+          width={2 * R + LX}
+          height={2 * R}
+          rx={R}
+          ry={R}
+          fill="rgba(20,32,58,0.85)"
+          stroke="#34507e"
+          stroke-width="22"
+        />
+        {/* Dashed centre line */}
+        <rect
+          x={CXL - R}
+          y={CY - R}
+          width={2 * R + LX}
+          height={2 * R}
+          rx={R}
+          ry={R}
+          fill="none"
+          stroke="rgba(232,193,112,0.5)"
+          stroke-width="1.5"
+          stroke-dasharray="2 9"
+        />
 
-      {/* Cell sockets */}
-      <For each={cells()}>
-        {(cell) => (
-          <div
-            class="absolute -translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center"
-            style={{
-              left: `${cell.x}%`,
-              top: `${cell.y}%`,
-              width: '3.4vh',
-              height: '3.4vh',
-              'max-width': '24px',
-              'max-height': '24px',
-              background: 'radial-gradient(circle at 50% 35%, rgba(255,255,255,0.08), rgba(0,0,0,0.35))',
-              border: '1.5px solid rgba(202,161,90,0.35)',
-              'box-shadow': 'inset 0 1px 3px rgba(0,0,0,0.5)',
-            }}
-          >
-            <span class="text-[9px] font-bold text-spy-accent/70">{cell.i}</span>
-          </div>
-        )}
-      </For>
+        {/* Houses at the two apexes */}
+        <For each={[{ pid: 'p1' as PlayerId, p: cellPoint(0) }, { pid: 'p2' as PlayerId, p: cellPoint(7) }]}>
+          {(h) => (
+            <g transform={`translate(${h.p.x}, ${h.p.y})`}>
+              <rect
+                x={-12}
+                y={-9}
+                width={24}
+                height={18}
+                rx={3}
+                fill={colorFor(h.pid)}
+                opacity="0.25"
+                stroke={colorFor(h.pid)}
+                stroke-width="1.5"
+              />
+              <path d={`M -12 -9 L 0 -17 L 12 -9 Z`} fill={colorFor(h.pid)} opacity="0.6" />
+            </g>
+          )}
+        </For>
 
-      {/* Pawns as poker chips */}
-      <For each={['p1', 'p2'] as PlayerId[]}>
-        {(pid) => {
-          const c = chip(pid);
-          return (
-            <div
-              class="pawn-move absolute -translate-x-1/2 -translate-y-1/2"
-              style={{ left: `${pawnPoint(pid).x}%`, top: `${pawnPoint(pid).y}%` }}
-            >
-              <div
-                class={`rounded-full flex items-center justify-center text-[10px] font-extrabold text-white shadow-card ${
-                  pid === 'p1' ? '-ml-1.5' : 'ml-1.5'
-                }`}
-                style={{
-                  width: '4.4vh',
-                  height: '4.4vh',
-                  'max-width': '32px',
-                  'max-height': '32px',
-                  background: `radial-gradient(circle at 50% 35%, ${c.base}, ${c.edge})`,
-                  border: '2px dashed rgba(255,255,255,0.85)',
-                  'box-shadow': '0 3px 6px rgba(0,0,0,0.5)',
-                }}
+        {/* Cell sockets */}
+        <For each={cells()}>
+          {(cell) => (
+            <g transform={`translate(${cell.x}, ${cell.y})`}>
+              <circle r="9" fill="#0e1a30" stroke="#3a577f" stroke-width="1.5" />
+              <text text-anchor="middle" y="3" font-size="8" font-weight="700" fill="#6f8cb8">
+                {cell.i}
+              </text>
+            </g>
+          )}
+        </For>
+
+        {/* Pawns: spy chips gliding along the track. */}
+        <For each={['p1', 'p2'] as PlayerId[]}>
+          {(pid) => {
+            const pt = () => pawnPoint(pid);
+            const dx = pid === 'p1' ? -6 : 6;
+            return (
+              <g
+                class="pawn-move"
+                style={{ transform: `translate(${pt().x + dx}px, ${pt().y}px)` }}
               >
-                {pid.toUpperCase()}
-              </div>
-            </div>
-          );
-        }}
-      </For>
+                <circle r="11" fill={colorFor(pid)} stroke="#0b1220" stroke-width="2" />
+                <circle r="11" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1" stroke-dasharray="2 2" />
+                <text text-anchor="middle" y="3.5" font-size="9" font-weight="800" fill="#0b1220">
+                  {pid.toUpperCase()}
+                </text>
+              </g>
+            );
+          }}
+        </For>
+      </svg>
     </div>
   );
 };
