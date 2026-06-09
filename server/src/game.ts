@@ -3,7 +3,6 @@ import type { AgentType, PlayerId } from './types';
 
 export const TRACK = 14; // cells on the ring
 export const HAND_SIZE = 4;
-export const MAX_DISCARDS = 4;
 
 // Quantities in the 38-card deck.
 export const DECK_COMPOSITION: Record<AgentType, number> = {
