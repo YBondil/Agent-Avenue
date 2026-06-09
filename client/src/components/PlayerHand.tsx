@@ -31,7 +31,7 @@ const PlayerHand: Component<PlayerHandProps> = (props) => {
   const spread = () => Math.min(9, 26 / Math.max(1, props.hand.length));
 
   return (
-    <div class="flex justify-center items-end h-[15vh] min-h-[96px]">
+    <div class="flex justify-center items-end h-[19dvh] min-h-[120px]">
       <div class="flex items-end">
         <For each={props.hand}>
           {(card, i) => {
@@ -45,7 +45,7 @@ const PlayerHand: Component<PlayerHandProps> = (props) => {
                 style={{
                   'z-index': isHover() ? '100' : sel() ? '60' : String(10 + i()),
                   transform: `rotate(${offset() * 5}deg) translateY(${Math.abs(offset()) * spread()}px)`,
-                  margin: '0 -11px',
+                  margin: '0 -14px',
                 }}
               >
                 <button
@@ -54,8 +54,8 @@ const PlayerHand: Component<PlayerHandProps> = (props) => {
                   onMouseEnter={() => setHovered(i())}
                   onMouseLeave={() => setHovered((h) => (h === i() ? null : h))}
                   onClick={() => handleClick(card)}
-                  class={`block w-[15vw] max-w-[78px] origin-bottom transition-transform duration-200 ${
-                    interactive() ? 'hover:-translate-y-6 hover:scale-110' : ''
+                  class={`block w-[clamp(72px,13dvh,104px)] origin-bottom transition-transform duration-200 ${
+                    interactive() ? 'hover:-translate-y-7 hover:scale-110' : ''
                   } ${sel() ? '-translate-y-4' : ''}`}
                 >
                   <Show when={sel()}>
