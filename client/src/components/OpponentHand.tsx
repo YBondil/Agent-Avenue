@@ -1,31 +1,28 @@
 import { Component, For } from 'solid-js';
-import Card from './Card';
 
 interface OpponentHandProps {
   count: number;
-  active?: boolean; // opponent is the active player
 }
 
-// Opponent's hand: holographic backs fanned downward from the top edge with a
-// negative overlap, hanging into the arena like a dealt spread.
+// Opponent's hand: overlapping card backs fanned from the top edge.
 const OpponentHand: Component<OpponentHandProps> = (props) => {
   return (
     <div class="flex justify-center">
-      <div class="flex -space-x-7">
+      <div class="flex">
         <For each={Array.from({ length: props.count })}>
           {(_, i) => {
             const n = props.count;
-            const mid = (n - 1) / 2;
-            const offset = i() - mid;
+            const offset = i() - (n - 1) / 2;
             return (
               <div
-                class="w-14 transition-transform duration-300"
+                class="w-[8vh] max-w-[52px] transition-transform duration-300"
                 style={{
-                  transform: `translateY(${Math.abs(offset) * 5}px) rotate(${offset * 5}deg)`,
+                  margin: '0 -10px',
+                  transform: `translateY(${Math.abs(offset) * 4}px) rotate(${offset * 4}deg)`,
                   'z-index': String(i()),
                 }}
               >
-                <Card faceDown glow={props.active} />
+                <div class="card-back w-full" />
               </div>
             );
           }}
