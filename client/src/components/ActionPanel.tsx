@@ -1,6 +1,5 @@
 import { Component, Show, createMemo } from 'solid-js';
 import type { AgentType, PlayerView } from '../types';
-import { AGENT_COLORS, AGENT_LABELS } from '../constants';
 import type { ClientMessage } from '../ws';
 
 interface ActionPanelProps {
@@ -11,6 +10,8 @@ interface ActionPanelProps {
   onResetSelection: () => void;
 }
 
+// Floating action tokens for the active player's commit step and the rematch.
+// The recruit phase is handled by DilemmaArena, not here.
 const ActionPanel: Component<ActionPanelProps> = (props) => {
   const view = () => props.view;
   const you = () => view().you;
@@ -35,115 +36,49 @@ const ActionPanel: Component<ActionPanelProps> = (props) => {
     props.onResetSelection();
   }
 
-  function handleRecruit(choice: 'faceUp' | 'faceDown') {
-    props.onSend({ type: 'recruit', choice });
-  }
-
-  if (you() === null) {
-    return (
-      <div class="text-center text-spy-muted text-sm font-bold py-1">
-        Vous observez la partie en tant que spectateur.
-      </div>
-    );
-  }
-
   return (
-    <div class="flex flex-col gap-2">
-      {/* Play phase - active player */}
+    <div class="flex items-center justify-center gap-3 min-h-[44px]">
+      {/* Active player commit */}
       <Show when={phase() === 'play' && isActive()}>
-        <div class="flex items-center gap-2">
-          <button
-            class="btn-primary flex-1 text-base"
-            onClick={handlePlay}
-            disabled={!canPlay()}
-            type="button"
-          >
-            Jouer
+        <Show when={props.selectedFaceUp !== null || props.selectedFaceDown !== null}>
+          <button class="token-ghost" onClick={props.onResetSelection} type="button">
+            Annuler
           </button>
-          <Show when={props.selectedFaceUp !== null || props.selectedFaceDown !== null}>
-            <button class="btn-secondary px-4" onClick={props.onResetSelection} type="button">
-              Annuler
-            </button>
-          </Show>
-        </div>
+        </Show>
+        <button class="token-cyan" onClick={handlePlay} disabled={!canPlay()} type="button">
+          Engager
+        </button>
         <Show
           when={props.selectedFaceUp !== null && props.selectedFaceDown !== null && !canPlay()}
         >
-          <p class="text-[11px] font-bold text-spy-danger text-center">
-            Les deux cartes doivent etre differentes.
-          </p>
+          <span class="text-[11px] font-bold text-spy-danger neon-text">Cartes identiques</span>
         </Show>
       </Show>
 
-      {/* Play phase - waiting */}
-      <Show when={phase() === 'play' && !isActive()}>
-        <div class="text-spy-muted text-sm font-bold text-center py-1">
-          En attente de l'adversaire...
-        </div>
-      </Show>
-
-      {/* Recruit phase - you choose */}
-      <Show when={phase() === 'recruit' && !isActive()}>
-        <div class="text-spy-success font-extrabold text-sm text-center">
-          Choisissez la carte a recruter (l'autre revient a l'adversaire)
-        </div>
-        <Show when={view().proposed !== null}>
-          <div class="grid grid-cols-2 gap-3">
-            <button
-              class="agent-card flex flex-col items-center justify-center gap-1 py-4"
-              onClick={() => handleRecruit('faceUp')}
-              type="button"
-            >
-              <span
-                class="agent-stripe"
-                style={{ background: AGENT_COLORS[view().proposed!.faceUp] }}
-              />
-              <span class="text-[10px] font-bold text-spy-muted uppercase tracking-wider">
-                Face visible
-              </span>
-              <span class="font-extrabold text-spy-text">
-                {AGENT_LABELS[view().proposed!.faceUp]}
-              </span>
-            </button>
-            <button
-              class="agent-card flex flex-col items-center justify-center gap-1 py-4"
-              onClick={() => handleRecruit('faceDown')}
-              type="button"
-            >
-              <span class="text-[10px] font-bold text-spy-muted uppercase tracking-wider">
-                Face cachee
-              </span>
-              <span class="font-extrabold text-3xl text-spy-muted">?</span>
-            </button>
-          </div>
-        </Show>
-      </Show>
-
-      {/* Recruit phase - active player waits */}
+      {/* Active player waiting on the dilemma */}
       <Show when={phase() === 'recruit' && isActive()}>
-        <div class="text-spy-muted text-sm font-bold text-center">
-          En attente du recrutement de l'adversaire...
-        </div>
-        <Show when={view().proposed !== null}>
-          <div class="text-[11px] text-spy-muted text-center">
-            Vous avez joue{' '}
-            <span class="font-bold text-spy-success">
-              {AGENT_LABELS[view().proposed!.faceUp]}
-            </span>{' '}
-            (visible) et{' '}
-            <span class="font-bold text-spy-warn">
-              {view().proposed?.faceDown ? AGENT_LABELS[view().proposed!.faceDown!] : '?'}
-            </span>{' '}
-            (cachee).
-          </div>
-        </Show>
+        <span class="text-spy-muted text-xs font-bold uppercase tracking-[0.3em]">
+          En attente du choix adverse
+        </span>
       </Show>
 
-      {/* Ended */}
+      {/* Non-active waiting for the opponent to commit */}
+      <Show when={phase() === 'play' && !isActive() && you() !== null}>
+        <span class="text-spy-muted text-xs font-bold uppercase tracking-[0.3em]">
+          L'adversaire prepare son duel
+        </span>
+      </Show>
+
+      {/* Rematch */}
       <Show when={phase() === 'ended'}>
-        <button class="btn-primary w-full" onClick={() => props.onSend({ type: 'reset' })} type="button">
+        <button class="token-magenta" onClick={() => props.onSend({ type: 'reset' })} type="button">
           Rejouer
         </button>
+      </Show>
+
+      {/* Spectator */}
+      <Show when={you() === null}>
+        <span class="text-spy-muted text-xs font-bold uppercase tracking-[0.3em]">Spectateur</span>
       </Show>
     </div>
   );
