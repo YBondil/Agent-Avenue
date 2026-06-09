@@ -6,23 +6,22 @@ interface BoardProps {
   view: PlayerView;
 }
 
-// Track rectangle inset, as percentages of the arena container.
-const XL = 6;
-const XR = 94;
-const YT = 7;
-const YB = 93;
+const XL = 8;
+const XR = 92;
+const YT = 8;
+const YB = 92;
 const W = XR - XL;
 const H = YB - YT;
 const PERIM = 2 * (W + H);
 
-// Map a track index (0..13) to a point on the rectangle perimeter, walking
-// clockwise from the top-left corner. Returns percentage coordinates.
+// Map a track index (0..13) to a point on the rectangle perimeter, clockwise
+// from the top-left corner. Percentage coordinates within the board.
 function perimeterPoint(index: number): { x: number; y: number } {
   const d = (index / BOARD_CELLS) * PERIM;
-  if (d <= W) return { x: XL + d, y: YT }; // top edge L->R
-  if (d <= W + H) return { x: XR, y: YT + (d - W) }; // right edge T->B
-  if (d <= 2 * W + H) return { x: XR - (d - (W + H)), y: YB }; // bottom edge R->L
-  return { x: XL, y: YB - (d - (2 * W + H)) }; // left edge B->T
+  if (d <= W) return { x: XL + d, y: YT };
+  if (d <= W + H) return { x: XR, y: YT + (d - W) };
+  if (d <= 2 * W + H) return { x: XR - (d - (W + H)), y: YB };
+  return { x: XL, y: YB - (d - (2 * W + H)) };
 }
 
 const Board: Component<BoardProps> = (props) => {
@@ -31,68 +30,80 @@ const Board: Component<BoardProps> = (props) => {
   );
 
   const you = () => props.view.you;
-  const colorFor = (pid: PlayerId) => (you() === pid ? '#22D3EE' : '#E879F9');
+  const chip = (pid: PlayerId) =>
+    you() === pid
+      ? { base: '#d8b25a', edge: '#a9823f' }
+      : { base: '#c0504a', edge: '#8c3a35' };
   const pawnPoint = (pid: PlayerId) => perimeterPoint(props.view.positions[pid]);
 
   return (
     <div class="absolute inset-0">
-      {/* Rectangular track outline delimiting the arena */}
+      {/* Inlaid felt track */}
       <div
-        class="absolute rounded-[2rem]"
+        class="absolute rounded-[1.5rem]"
         style={{
           left: `${XL}%`,
           top: `${YT}%`,
           width: `${W}%`,
           height: `${H}%`,
-          'box-shadow': '0 0 24px rgba(34,211,238,0.25), inset 0 0 24px rgba(34,211,238,0.12)',
-          border: '1.5px solid rgba(34,211,238,0.35)',
+          background: 'rgba(0,0,0,0.10)',
+          border: '2px solid rgba(202,161,90,0.5)',
+          'box-shadow':
+            'inset 0 2px 8px rgba(0,0,0,0.45), inset 0 0 0 5px rgba(0,0,0,0.06), 0 1px 0 rgba(255,255,255,0.06)',
         }}
       />
 
-      {/* Cell nodes */}
+      {/* Cell sockets */}
       <For each={cells()}>
         {(cell) => (
           <div
-            class="absolute -translate-x-1/2 -translate-y-1/2 flex items-center justify-center"
-            style={{ left: `${cell.x}%`, top: `${cell.y}%` }}
+            class="absolute -translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center"
+            style={{
+              left: `${cell.x}%`,
+              top: `${cell.y}%`,
+              width: '3.4vh',
+              height: '3.4vh',
+              'max-width': '24px',
+              'max-height': '24px',
+              background: 'radial-gradient(circle at 50% 35%, rgba(255,255,255,0.08), rgba(0,0,0,0.35))',
+              border: '1.5px solid rgba(202,161,90,0.35)',
+              'box-shadow': 'inset 0 1px 3px rgba(0,0,0,0.5)',
+            }}
           >
-            <div
-              class="w-5 h-5 rounded-full flex items-center justify-center"
-              style={{
-                background: 'rgba(34,211,238,0.06)',
-                border: '1.5px solid rgba(34,211,238,0.4)',
-                'box-shadow': '0 0 8px rgba(34,211,238,0.3)',
-              }}
-            >
-              <span class="text-[8px] font-bold text-spy-accent/70">{cell.i}</span>
-            </div>
+            <span class="text-[9px] font-bold text-spy-accent/70">{cell.i}</span>
           </div>
         )}
       </For>
 
-      {/* Pawns: orthogonal travel via staggered left/top transitions. */}
-      <div
-        class="pawn-move absolute -translate-x-1/2 -translate-y-1/2"
-        style={{ left: `${pawnPoint('p1').x}%`, top: `${pawnPoint('p1').y}%` }}
-      >
-        <div
-          class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-extrabold text-black -ml-1.5"
-          style={{ background: colorFor('p1'), 'box-shadow': `0 0 16px ${colorFor('p1')}` }}
-        >
-          P1
-        </div>
-      </div>
-      <div
-        class="pawn-move absolute -translate-x-1/2 -translate-y-1/2"
-        style={{ left: `${pawnPoint('p2').x}%`, top: `${pawnPoint('p2').y}%` }}
-      >
-        <div
-          class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-extrabold text-black ml-1.5"
-          style={{ background: colorFor('p2'), 'box-shadow': `0 0 16px ${colorFor('p2')}` }}
-        >
-          P2
-        </div>
-      </div>
+      {/* Pawns as poker chips */}
+      <For each={['p1', 'p2'] as PlayerId[]}>
+        {(pid) => {
+          const c = chip(pid);
+          return (
+            <div
+              class="pawn-move absolute -translate-x-1/2 -translate-y-1/2"
+              style={{ left: `${pawnPoint(pid).x}%`, top: `${pawnPoint(pid).y}%` }}
+            >
+              <div
+                class={`rounded-full flex items-center justify-center text-[10px] font-extrabold text-white shadow-card ${
+                  pid === 'p1' ? '-ml-1.5' : 'ml-1.5'
+                }`}
+                style={{
+                  width: '4.4vh',
+                  height: '4.4vh',
+                  'max-width': '32px',
+                  'max-height': '32px',
+                  background: `radial-gradient(circle at 50% 35%, ${c.base}, ${c.edge})`,
+                  border: '2px dashed rgba(255,255,255,0.85)',
+                  'box-shadow': '0 3px 6px rgba(0,0,0,0.5)',
+                }}
+              >
+                {pid.toUpperCase()}
+              </div>
+            </div>
+          );
+        }}
+      </For>
     </div>
   );
 };
