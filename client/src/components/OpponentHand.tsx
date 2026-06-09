@@ -16,7 +16,7 @@ const OpponentHand: Component<OpponentHandProps> = (props) => {
             const offset = i() - (n - 1) / 2;
             return (
               <div
-                class="w-[7.5vh] max-w-[50px] transition-transform duration-300"
+                class="w-[8.5vh] max-w-[58px] transition-transform duration-300"
                 style={{
                   margin: '0 -9px',
                   transform: `translateY(${Math.abs(offset) * 4}px) rotate(${offset * 4}deg)`,
