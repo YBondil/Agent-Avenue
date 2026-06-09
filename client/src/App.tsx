@@ -29,8 +29,6 @@ const App: Component = () => {
   // Hand selection state
   const [selectedFaceUp, setSelectedFaceUp] = createSignal<AgentType | null>(null);
   const [selectedFaceDown, setSelectedFaceDown] = createSignal<AgentType | null>(null);
-  const [discardCandidate, setDiscardCandidate] = createSignal<AgentType | null>(null);
-  const [discardMode, setDiscardMode] = createSignal(false);
 
   // WebSocket ref
   let ws: WebSocket | null = null;
@@ -43,8 +41,6 @@ const App: Component = () => {
   function resetSelection() {
     setSelectedFaceUp(null);
     setSelectedFaceDown(null);
-    setDiscardCandidate(null);
-    setDiscardMode(false);
   }
 
   function connectToRoom(code: string) {
@@ -117,11 +113,6 @@ const App: Component = () => {
     }
   }
 
-  function handleToggleDiscardMode() {
-    setDiscardMode((v) => !v);
-    setDiscardCandidate(null);
-  }
-
   function handleSelectFaceUp(card: AgentType) {
     if (selectedFaceUp() === card) {
       setSelectedFaceUp(null);
@@ -143,10 +134,6 @@ const App: Component = () => {
       }
       setSelectedFaceDown(card);
     }
-  }
-
-  function handleSelectDiscard(card: AgentType) {
-    setDiscardCandidate((prev) => (prev === card ? null : card));
   }
 
   const currentView = () => view();
@@ -225,18 +212,12 @@ const App: Component = () => {
               onSelectFaceUp={handleSelectFaceUp}
               onSelectFaceDown={handleSelectFaceDown}
               selectionMode={phase() === 'play' && myTurn() ? 'picking' : 'none'}
-              discardCandidate={discardCandidate()}
-              onSelectDiscard={handleSelectDiscard}
-              discardMode={discardMode()}
             />
             <ActionPanel
               view={currentView()!}
               selectedFaceUp={selectedFaceUp()}
               selectedFaceDown={selectedFaceDown()}
-              discardCandidate={discardCandidate()}
-              discardMode={discardMode()}
               onSend={handleSend}
-              onToggleDiscardMode={handleToggleDiscardMode}
               onResetSelection={resetSelection}
             />
           </footer>
