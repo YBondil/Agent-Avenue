@@ -38,7 +38,7 @@ const FlyingCard: Component<{ flyer: Flyer; onDone: (id: number) => void }> = (p
 
   return (
     <div ref={el} class="draw-flyer">
-      <div class="card-back w-full" />
+      <img src="/assets/cards/back.png" alt="" />
     </div>
   );
 };
@@ -84,14 +84,16 @@ const Deck: Component<DeckProps> = (props) => {
       >
         <For each={Array.from({ length: layers() })}>
           {(_, i) => (
-            <div
-              class="card-back w-full absolute left-0"
+            <img
+              src="/assets/cards/back.png"
+              alt=""
+              class="w-full absolute left-0 rounded-lg shadow-card"
               style={{ top: `${-i() * 2}px`, 'z-index': String(i()) }}
             />
           )}
         </For>
         {/* spacer to give the stack height */}
-        <div class="card-back w-full invisible" />
+        <img src="/assets/cards/back.png" alt="" class="w-full invisible" />
       </div>
 
       {/* In-flight drawn cards */}
