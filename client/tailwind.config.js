@@ -6,24 +6,20 @@ export default {
   ],
   theme: {
     extend: {
-      // Realistic casino-felt table with ivory cards and warm wood/gold trim.
+      // Night-city / spy-dossier theme: deep navy, blueprint cyan, manila accent.
       colors: {
-        'felt-900': '#0a3522',
-        'felt-800': '#0d4a30',
-        'felt-700': '#11603d',
-        'spy-bg': '#0b3d27',       // felt base
-        'spy-surface': '#0d3221',  // darker felt panel
-        'spy-card': '#f6efdd',     // ivory card stock
-        'spy-border': '#caa15a',   // gold trim
-        'spy-accent': '#caa15a',   // gold
-        'spy-accent2': '#1f7a4d',  // table green accent
-        'spy-danger': '#c0392b',   // deep red
-        'spy-success': '#2e8b57',  // felt-friendly green
-        'spy-warn': '#d99a2b',     // amber
-        'spy-text': '#f3eee0',     // light ink on felt
-        'spy-muted': '#9cbcab',    // muted mint on felt
-        'ink': '#26211a',          // dark text on ivory cards
-        'ink-muted': '#6f6552',
+        'spy-bg': '#0b1220',      // night city base
+        'spy-surface': '#13203a', // panel
+        'spy-card': '#16233f',    // raised surface
+        'spy-border': '#2a3c5e',  // structural line
+        'spy-accent': '#e8c170',  // manila / dossier amber
+        'spy-accent2': '#4aa3df', // blueprint cyan
+        'spy-danger': '#e0556a',
+        'spy-success': '#3fb27f',
+        'spy-warn': '#e8a23a',
+        'spy-text': '#e8eefb',
+        'spy-muted': '#8aa0c4',
+        'ink': '#1b2336',
       },
       borderRadius: {
         '2xl': '1rem',
@@ -31,10 +27,9 @@ export default {
         '4xl': '1.75rem',
       },
       boxShadow: {
-        // Physical, grounded shadows for card thickness and table depth.
-        card: '0 6px 14px -4px rgba(0,0,0,0.55), 0 2px 4px rgba(0,0,0,0.4)',
-        'card-lg': '0 16px 34px -10px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.45)',
-        token: '0 4px 10px -2px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.25)',
+        card: '0 8px 18px -6px rgba(0,0,0,0.7), 0 2px 5px rgba(0,0,0,0.5)',
+        'card-lg': '0 20px 40px -12px rgba(0,0,0,0.8), 0 6px 12px rgba(0,0,0,0.5)',
+        token: '0 4px 10px -2px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.18)',
       },
     },
   },
