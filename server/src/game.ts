@@ -40,18 +40,17 @@ export function deltaFor(type: AgentType, count: number): number {
     case "mercenaire":
       return count === 1 ? 1 : count === 2 ? 2 : 3;
     case "risqueTout":
-      return count === 1 ? 2 : count === 2 ? 3 : 0; // 3+ = DEFEAT, no move
+      return count === 1 ? 2 : count === 2 ? 3 : 0;
     case "cryptologue":
-      return 0; // 1x/2x = 0, 3+ = VICTORY, no move
+      return 0;
     case "sentinelle":
       return count === 1 ? 0 : count === 2 ? 2 : 6;
     case "acolyte":
-      return 4; // single copy in the deck
+      return 4;
     case "taupe":
-      return -3; // single copy in the deck
+      return -3;
   }
 }
-
 export function buildDeck(): AgentType[] {
   const deck: AgentType[] = [];
   (Object.keys(DECK_COMPOSITION) as AgentType[]).forEach((type) => {
