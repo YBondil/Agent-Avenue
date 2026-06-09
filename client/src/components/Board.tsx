@@ -1,4 +1,4 @@
-import { Component, For, createMemo } from 'solid-js';
+import { Component, For, createEffect, createMemo, createSignal, onCleanup } from 'solid-js';
 import type { PlayerId, PlayerView } from '../types';
 import { BOARD_CELLS } from '../constants';
 
@@ -19,8 +19,8 @@ const LX = CXR - CXL; // straight run length
 const S1 = (Math.PI * R) / 2; // upper-left quarter
 const S2 = LX; // top straight
 const S3 = Math.PI * R; // right semicircle
-const S4 = LX; // bottom straight
 const PERIM = 2 * LX + 2 * Math.PI * R;
+const STEP_MS = 150; // pause between single-cell hops
 
 // Point at perimeter index (0..13), walking clockwise from the left apex.
 function cellPoint(index: number): { x: number; y: number } {
@@ -36,10 +36,10 @@ function cellPoint(index: number): { x: number; y: number } {
     const a = 1.5 * Math.PI + ((d - S1 - S2) / S3) * Math.PI; // right semicircle
     return { x: CXR + R * Math.cos(a), y: CY + R * Math.sin(a) };
   }
-  if (d <= S1 + S2 + S3 + S4) {
+  if (d <= S1 + S2 + S3 + LX) {
     return { x: CXR - (d - S1 - S2 - S3), y: CY + R }; // bottom straight
   }
-  const a = 0.5 * Math.PI + ((d - S1 - S2 - S3 - S4) / S1) * (Math.PI / 2); // lower-left quarter
+  const a = 0.5 * Math.PI + ((d - S1 - S2 - S3 - LX) / S1) * (Math.PI / 2); // lower-left quarter
   return { x: CXL + R * Math.cos(a), y: CY + R * Math.sin(a) };
 }
 
@@ -50,7 +50,72 @@ const Board: Component<BoardProps> = (props) => {
 
   const you = () => props.view.you;
   const colorFor = (pid: PlayerId) => (you() === pid ? '#e8c170' : '#4aa3df');
-  const pawnPoint = (pid: PlayerId) => cellPoint(props.view.positions[pid]);
+
+  // Animated cell index per pawn. Plain refs drive the stepping logic (so the
+  // effect only tracks the server target), signals drive the render.
+  const cur: Record<PlayerId, number> = {
+    p1: props.view.positions.p1,
+    p2: props.view.positions.p2,
+  };
+  const [renderP1, setRenderP1] = createSignal(cur.p1);
+  const [renderP2, setRenderP2] = createSignal(cur.p2);
+  const setters: Record<PlayerId, (n: number) => void> = { p1: setRenderP1, p2: setRenderP2 };
+  const timers: Record<PlayerId, ReturnType<typeof setTimeout> | undefined> = {
+    p1: undefined,
+    p2: undefined,
+  };
+  let initialised = false;
+
+  // Walk a pawn from its current cell to `target` one cell at a time, in the
+  // real movement direction (deltas are bounded to [-3, +6], so the signed step
+  // is recoverable from the two positions).
+  function stepTo(pid: PlayerId, target: number) {
+    clearTimeout(timers[pid]);
+    if (cur[pid] === target) return;
+    const fwd = (target - cur[pid] + 14) % 14; // 0..13
+    const dir = fwd >= 11 ? -1 : 1; // 11,12,13 == -3,-2,-1
+    const hop = () => {
+      cur[pid] = (cur[pid] + dir + 14) % 14;
+      setters[pid](cur[pid]);
+      if (cur[pid] !== target) timers[pid] = setTimeout(hop, STEP_MS);
+    };
+    timers[pid] = setTimeout(hop, STEP_MS);
+  }
+
+  createEffect(() => {
+    const t1 = props.view.positions.p1;
+    const t2 = props.view.positions.p2;
+    if (!initialised) {
+      cur.p1 = t1;
+      cur.p2 = t2;
+      setRenderP1(t1);
+      setRenderP2(t2);
+      initialised = true;
+      return;
+    }
+    stepTo('p1', t1);
+    stepTo('p2', t2);
+  });
+
+  onCleanup(() => {
+    clearTimeout(timers.p1);
+    clearTimeout(timers.p2);
+  });
+
+  const pawnIndex: Record<PlayerId, () => number> = { p1: renderP1, p2: renderP2 };
+
+  // A small house marker; the door faces inward (toward the track centre). P2's
+  // is mirrored so both houses face each other.
+  const House = (pid: PlayerId, flip: boolean) => {
+    const c = colorFor(pid);
+    return (
+      <g transform={`scale(${flip ? -1 : 1}, 1)`}>
+        <path d="M -13 -9 L 0 -18 L 13 -9 Z" fill={c} opacity="0.7" />
+        <rect x={-12} y={-9} width={24} height={19} rx={2} fill={c} opacity="0.22" stroke={c} stroke-width="1.5" />
+        <rect x={3} y={-1} width={7} height={11} rx={1.5} fill={c} opacity="0.85" />
+      </g>
+    );
+  };
 
   return (
     <div class="absolute inset-0 flex items-center justify-center px-2">
@@ -86,25 +151,9 @@ const Board: Component<BoardProps> = (props) => {
           stroke-dasharray="2 9"
         />
 
-        {/* Houses at the two apexes */}
-        <For each={[{ pid: 'p1' as PlayerId, p: cellPoint(0) }, { pid: 'p2' as PlayerId, p: cellPoint(7) }]}>
-          {(h) => (
-            <g transform={`translate(${h.p.x}, ${h.p.y})`}>
-              <rect
-                x={-12}
-                y={-9}
-                width={24}
-                height={18}
-                rx={3}
-                fill={colorFor(h.pid)}
-                opacity="0.25"
-                stroke={colorFor(h.pid)}
-                stroke-width="1.5"
-              />
-              <path d={`M -12 -9 L 0 -17 L 12 -9 Z`} fill={colorFor(h.pid)} opacity="0.6" />
-            </g>
-          )}
-        </For>
+        {/* Houses at the two apexes. P1 faces right (inward), P2 mirrored. */}
+        <g transform={`translate(${cellPoint(0).x}, ${cellPoint(0).y})`}>{House('p1', false)}</g>
+        <g transform={`translate(${cellPoint(7).x}, ${cellPoint(7).y})`}>{House('p2', true)}</g>
 
         {/* Cell sockets */}
         <For each={cells()}>
@@ -118,11 +167,11 @@ const Board: Component<BoardProps> = (props) => {
           )}
         </For>
 
-        {/* Pawns: spy chips gliding along the track. */}
+        {/* Pawns: spy chips hopping cell by cell along the track. */}
         <For each={['p1', 'p2'] as PlayerId[]}>
           {(pid) => {
-            const pt = () => pawnPoint(pid);
-            const dx = pid === 'p1' ? -6 : 6;
+            const pt = () => cellPoint(pawnIndex[pid]());
+            const dx = pid === 'p1' ? -5 : 5;
             return (
               <g
                 class="pawn-move"
