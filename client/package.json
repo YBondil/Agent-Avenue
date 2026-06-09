@@ -1,0 +1,21 @@
+{
+  "name": "agent-avenue-client",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "solid-js": "^1.8.20"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0",
+    "vite-plugin-solid": "^2.10.2",
+    "typescript": "^5.5.3",
+    "tailwindcss": "^3.4.10",
+    "postcss": "^8.4.41",
+    "autoprefixer": "^10.4.20"
+  }
+}
