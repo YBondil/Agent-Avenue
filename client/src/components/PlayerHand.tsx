@@ -11,8 +11,7 @@ interface PlayerHandProps {
   selectionMode: 'none' | 'picking';
 }
 
-// The active player's hand, fanned in an arc and anchored to the bottom edge.
-// Cards lift, scale and rise above their neighbours on hover.
+// The active player's hand: a dynamic overlapping fan anchored to the bottom.
 const PlayerHand: Component<PlayerHandProps> = (props) => {
   const [hovered, setHovered] = createSignal<number | null>(null);
 
@@ -28,30 +27,25 @@ const PlayerHand: Component<PlayerHandProps> = (props) => {
   }
 
   const interactive = () => props.selectionMode === 'picking';
+  // Tighter overlap and steeper arc as the hand grows.
+  const spread = () => Math.min(9, 26 / Math.max(1, props.hand.length));
 
   return (
-    <div class="flex justify-center items-end h-28">
+    <div class="flex justify-center items-end h-[15vh] min-h-[96px]">
       <div class="flex items-end">
         <For each={props.hand}>
           {(card, i) => {
             const n = props.hand.length;
-            const mid = () => (n - 1) / 2;
-            const offset = () => i() - mid();
+            const offset = () => i() - (n - 1) / 2;
             const isHover = () => hovered() === i();
             const sel = () => slot(card);
-            const ring = () =>
-              sel() === 'up'
-                ? '0 0 26px 2px rgba(52,211,153,0.9)'
-                : sel() === 'down'
-                ? '0 0 26px 2px rgba(251,191,36,0.9)'
-                : undefined;
             return (
               <div
                 class="relative"
                 style={{
                   'z-index': isHover() ? '100' : sel() ? '60' : String(10 + i()),
-                  transform: `rotate(${offset() * 6}deg) translateY(${Math.abs(offset()) * 7}px)`,
-                  margin: '0 -12px',
+                  transform: `rotate(${offset() * 5}deg) translateY(${Math.abs(offset()) * spread()}px)`,
+                  margin: '0 -11px',
                 }}
               >
                 <button
@@ -60,21 +54,20 @@ const PlayerHand: Component<PlayerHandProps> = (props) => {
                   onMouseEnter={() => setHovered(i())}
                   onMouseLeave={() => setHovered((h) => (h === i() ? null : h))}
                   onClick={() => handleClick(card)}
-                  class={`block w-16 origin-bottom transition-transform duration-200 ${
-                    interactive() ? 'hover:-translate-y-7 hover:scale-110' : ''
-                  } ${sel() ? '-translate-y-5' : ''}`}
-                  style={{ 'border-radius': '0.75rem', 'box-shadow': ring() }}
+                  class={`block w-[15vw] max-w-[78px] origin-bottom transition-transform duration-200 ${
+                    interactive() ? 'hover:-translate-y-6 hover:scale-110' : ''
+                  } ${sel() ? '-translate-y-4' : ''}`}
                 >
                   <Show when={sel()}>
                     <span
-                      class={`absolute top-1 left-1/2 -translate-x-1/2 z-10 px-1.5 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-wider text-black ${
-                        sel() === 'up' ? 'bg-spy-success' : 'bg-spy-warn'
+                      class={`absolute top-1 left-1/2 -translate-x-1/2 z-50 px-1.5 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-wide text-white shadow-card ${
+                        sel() === 'up' ? 'bg-spy-success' : 'bg-spy-danger'
                       }`}
                     >
                       {sel() === 'up' ? 'Visible' : 'Cachee'}
                     </span>
                   </Show>
-                  <Card type={card} glow={sel() !== null} />
+                  <Card type={card} selected={sel() !== null} />
                 </button>
               </div>
             );
