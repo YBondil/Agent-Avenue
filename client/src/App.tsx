@@ -173,7 +173,11 @@ const App: Component = () => {
           {/* CENTER ZONE: the plateau. Board, play zones, dilemma, result. */}
           <main class="relative">
             <Board view={currentView()!} />
-            <PlayZone view={currentView()!} />
+            {/* During recruit the dilemma's "Voir les jeux" toggle shows the
+                zones inline, so hide the ambient PlayZone to avoid duplicates. */}
+            <Show when={phase() !== 'recruit'}>
+              <PlayZone view={currentView()!} />
+            </Show>
 
             <Show when={phase() === 'recruit' && currentView()!.proposed !== null}>
               <DilemmaArena
