@@ -3,9 +3,23 @@
 @tailwind utilities;
 
 @layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
   body {
-    @apply bg-spy-bg text-spy-text min-h-screen;
-    font-family: system-ui, -apple-system, sans-serif;
+    @apply text-spy-text;
+    margin: 0;
+    font-family: 'Nunito', 'Baloo 2', system-ui, -apple-system, sans-serif;
+    /* Soft jovial gradient backdrop evoking a board-game table. */
+    background: radial-gradient(circle at 15% 0%, #ffe9c7 0%, transparent 45%),
+      radial-gradient(circle at 90% 10%, #ffd6e7 0%, transparent 40%),
+      radial-gradient(circle at 50% 100%, #d8f3ff 0%, transparent 45%),
+      #fdf2e3;
+    background-attachment: fixed;
+    -webkit-tap-highlight-color: transparent;
   }
 
   * {
@@ -14,53 +28,129 @@
 }
 
 @layer components {
-  .card-back {
-    @apply bg-spy-card border border-spy-border rounded-lg flex items-center justify-center text-spy-muted font-bold;
+  .panel {
+    @apply bg-spy-surface/90 backdrop-blur rounded-3xl border-2 border-spy-border shadow-card;
   }
 
+  .card-back {
+    @apply rounded-2xl border-2 border-spy-border flex items-center justify-center
+      text-spy-muted font-extrabold select-none;
+    background: repeating-linear-gradient(
+        45deg,
+        #efe6ff,
+        #efe6ff 8px,
+        #e7dcff 8px,
+        #e7dcff 16px
+      );
+  }
+
+  /* Playable agent card: big tap target, springy hover and selection. */
   .agent-card {
-    @apply bg-spy-card border-2 border-spy-border rounded-lg p-3 cursor-pointer transition-all duration-150 select-none;
+    @apply relative bg-spy-surface border-2 border-spy-border rounded-2xl
+      cursor-pointer select-none shadow-card overflow-hidden;
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
   }
 
   .agent-card:hover {
-    @apply border-spy-accent;
+    @apply -translate-y-1 shadow-playful border-spy-accent;
+  }
+
+  .agent-card:active {
+    @apply translate-y-0 scale-95;
   }
 
   .agent-card.selected {
-    @apply border-spy-accent bg-spy-accent/20;
+    @apply border-spy-accent bg-spy-accent/10 -translate-y-1 shadow-playful;
   }
 
   .agent-card.face-up-selected {
-    @apply border-spy-success bg-spy-success/20;
+    @apply border-spy-success bg-spy-success/15 -translate-y-1 shadow-playful;
   }
 
   .agent-card.face-down-selected {
-    @apply border-spy-warn bg-spy-warn/20;
+    @apply border-spy-warn bg-spy-warn/15 -translate-y-1 shadow-playful;
   }
 
   .btn {
-    @apply px-4 py-2 rounded-lg font-semibold transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply px-5 py-3 rounded-2xl font-extrabold tracking-wide
+      transition-all duration-150 active:scale-95
+      disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100;
   }
 
   .btn-primary {
-    @apply btn bg-spy-accent text-white hover:bg-blue-500 active:scale-95;
+    @apply btn bg-spy-accent text-white shadow-playful hover:brightness-110;
   }
 
   .btn-secondary {
-    @apply btn bg-spy-surface text-spy-text border border-spy-border hover:border-spy-accent active:scale-95;
+    @apply btn bg-spy-surface text-spy-text border-2 border-spy-border hover:border-spy-accent;
   }
 
   .btn-danger {
-    @apply btn bg-spy-danger text-white hover:bg-red-500 active:scale-95;
+    @apply btn bg-spy-danger text-white shadow-playful hover:brightness-110;
   }
 
   .btn-success {
-    @apply btn bg-spy-success text-white hover:bg-green-500 active:scale-95;
+    @apply btn bg-spy-success text-white shadow-playful hover:brightness-110;
+  }
+
+  /* Colored accent stripe atop a card / chip. */
+  .agent-stripe {
+    @apply absolute top-0 left-0 right-0 h-1.5;
   }
 }
 
 @layer utilities {
-  .pawn-transition {
-    transition: cx 0.6s ease-in-out, cy 0.6s ease-in-out;
+  /* Smooth, slightly springy pawn travel on the board. */
+  .pawn-move {
+    transition: transform 0.6s cubic-bezier(0.34, 1.3, 0.5, 1);
+  }
+
+  /* Entrance for freshly recruited cards in the play zone. */
+  .animate-card-enter {
+    animation: card-enter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  .animate-pop {
+    animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  .animate-pulse-dot {
+    animation: pulse-dot 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes card-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.7) rotate(-6deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0);
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.85);
+  }
+  60% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.5;
   }
 }
