@@ -10,6 +10,7 @@ import OpponentHand from './components/OpponentHand';
 import PlayZone from './components/PlayZone';
 import ActionPanel from './components/ActionPanel';
 import DilemmaArena from './components/DilemmaArena';
+import RecruitReveal from './components/RecruitReveal';
 import Deck from './components/Deck';
 import Toast from './components/Toast';
 import WinBanner from './components/WinBanner';
@@ -31,8 +32,12 @@ const App: Component = () => {
   const [selectedFaceUp, setSelectedFaceUp] = createSignal<AgentType | null>(null);
   const [selectedFaceDown, setSelectedFaceDown] = createSignal<AgentType | null>(null);
 
+  // Transient "who recruited what" reveal after a recruit resolves.
+  const [reveal, setReveal] = createSignal<{ oppCard: AgentType; myCard: AgentType } | null>(null);
+
   // WebSocket ref
   let ws: WebSocket | null = null;
+  let prevView: PlayerView | null = null;
 
   function showToast(msg: string) {
     setToast(msg);
@@ -54,11 +59,22 @@ const App: Component = () => {
       code,
       (msg) => {
         if (msg.type === 'state') {
-          setView(msg.view);
-          // Reset selection when phase changes to play
-          if (msg.view.phase === 'play') {
-            resetSelection();
+          const prev = prevView;
+          const v = msg.view;
+          // A recruit just resolved: reveal which card went where.
+          if (prev && prev.phase === 'recruit' && v.phase !== 'recruit' && prev.proposed) {
+            const me = v.you ?? 'p1';
+            const opp = me === 'p1' ? 'p2' : 'p1';
+            const oppCard = v.inPlay[opp].at(-1);
+            const myCard = v.inPlay[me].at(-1);
+            if (oppCard && myCard) {
+              setReveal({ oppCard, myCard });
+              setTimeout(() => setReveal(null), 1150);
+            }
           }
+          setView(v);
+          if (v.phase === 'play') resetSelection();
+          prevView = v;
         } else if (msg.type === 'error') {
           showToast(msg.message);
         }
@@ -141,6 +157,8 @@ const App: Component = () => {
   const phase = () => currentView()?.phase ?? 'lobby';
   const myTurn = () =>
     currentView() !== null && currentView()!.you === currentView()!.activePlayer;
+  const meId = (): 'p1' | 'p2' => currentView()?.you ?? 'p1';
+  const oppId = (): 'p1' | 'p2' => (meId() === 'p1' ? 'p2' : 'p1');
 
   return (
     <>
@@ -165,19 +183,15 @@ const App: Component = () => {
           class="grid mx-auto max-w-3xl overflow-hidden"
           style={{ height: '100dvh', 'grid-template-rows': 'auto minmax(0,1fr) auto' }}
         >
-          {/* TOP ZONE: opponent's card backs */}
-          <header class="pt-2 pb-1">
+          {/* TOP ZONE: opponent's card backs + their recruited cards */}
+          <header class="pt-2 flex flex-col">
             <OpponentHand count={currentView()!.oppHandCount} />
+            <PlayZone cards={currentView()!.inPlay[oppId()]} label="Adversaire" mine={false} />
           </header>
 
-          {/* CENTER ZONE: the plateau. Board, play zones, dilemma, result. */}
+          {/* CENTER ZONE: the plateau, kept clear of the recruited cards. */}
           <main class="relative">
             <Board view={currentView()!} />
-            {/* During recruit the dilemma's "Voir les jeux" toggle shows the
-                zones inline, so hide the ambient PlayZone to avoid duplicates. */}
-            <Show when={phase() !== 'recruit'}>
-              <PlayZone view={currentView()!} />
-            </Show>
 
             <Show when={phase() === 'recruit' && currentView()!.proposed !== null}>
               <DilemmaArena
@@ -196,8 +210,9 @@ const App: Component = () => {
             </Show>
           </main>
 
-          {/* BOTTOM ZONE: action tokens + the player's fanned hand */}
-          <footer class="pb-[max(0.75rem,env(safe-area-inset-bottom))] flex flex-col gap-1">
+          {/* BOTTOM ZONE: your recruited cards + action tokens + fanned hand */}
+          <footer class="pb-[max(0.5rem,env(safe-area-inset-bottom))] flex flex-col gap-1">
+            <PlayZone cards={currentView()!.inPlay[meId()]} label="Vous" mine={true} />
             <ActionPanel
               view={currentView()!}
               selectedFaceUp={selectedFaceUp()}
@@ -217,6 +232,11 @@ const App: Component = () => {
 
           {/* Deck pile + 3D draw animation overlay (local and opponent draws) */}
           <Deck view={currentView()!} />
+
+          {/* Recruit reveal: chosen card to the opponent, the other to you */}
+          <Show when={reveal()}>
+            <RecruitReveal oppCard={reveal()!.oppCard} myCard={reveal()!.myCard} />
+          </Show>
         </div>
       </Show>
     </>
