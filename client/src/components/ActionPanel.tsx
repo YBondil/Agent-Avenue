@@ -7,10 +7,7 @@ interface ActionPanelProps {
   view: PlayerView;
   selectedFaceUp: AgentType | null;
   selectedFaceDown: AgentType | null;
-  discardCandidate: AgentType | null;
-  discardMode: boolean;
   onSend: (msg: ClientMessage) => void;
-  onToggleDiscardMode: () => void;
   onResetSelection: () => void;
 }
 
@@ -19,13 +16,6 @@ const ActionPanel: Component<ActionPanelProps> = (props) => {
   const you = () => view().you;
   const isActive = () => you() !== null && view().activePlayer === you();
   const phase = () => view().phase;
-
-  const discardsLeft = createMemo(() => {
-    const pid = you();
-    return pid ? 4 - view().discardsUsed[pid] : 0;
-  });
-
-  const canDiscard = () => discardsLeft() > 0 && view().deckCount > 0;
 
   const canPlay = createMemo(() => {
     const fu = props.selectedFaceUp;
@@ -45,13 +35,6 @@ const ActionPanel: Component<ActionPanelProps> = (props) => {
     props.onResetSelection();
   }
 
-  function handleDiscard() {
-    const card = props.discardCandidate;
-    if (!card) return;
-    props.onSend({ type: 'discard', card });
-    props.onResetSelection();
-  }
-
   function handleRecruit(choice: 'faceUp' | 'faceDown') {
     props.onSend({ type: 'recruit', choice });
   }
@@ -68,56 +51,27 @@ const ActionPanel: Component<ActionPanelProps> = (props) => {
     <div class="flex flex-col gap-2">
       {/* Play phase - active player */}
       <Show when={phase() === 'play' && isActive()}>
-        {/* Discard / play actions */}
-        <Show when={!props.discardMode}>
-          <div class="flex items-center gap-2">
-            <button
-              class="btn-primary flex-1 text-base"
-              onClick={handlePlay}
-              disabled={!canPlay()}
-              type="button"
-            >
-              Jouer
-            </button>
-            <Show when={props.selectedFaceUp !== null || props.selectedFaceDown !== null}>
-              <button class="btn-secondary px-4" onClick={props.onResetSelection} type="button">
-                Annuler
-              </button>
-            </Show>
-            <button
-              class="btn-secondary px-4"
-              onClick={props.onToggleDiscardMode}
-              disabled={!canDiscard()}
-              type="button"
-            >
-              Defausser ({discardsLeft()})
-            </button>
-          </div>
-          <Show
-            when={props.selectedFaceUp !== null && props.selectedFaceDown !== null && !canPlay()}
+        <div class="flex items-center gap-2">
+          <button
+            class="btn-primary flex-1 text-base"
+            onClick={handlePlay}
+            disabled={!canPlay()}
+            type="button"
           >
-            <p class="text-[11px] font-bold text-spy-danger text-center">
-              Les deux cartes doivent etre differentes.
-            </p>
+            Jouer
+          </button>
+          <Show when={props.selectedFaceUp !== null || props.selectedFaceDown !== null}>
+            <button class="btn-secondary px-4" onClick={props.onResetSelection} type="button">
+              Annuler
+            </button>
           </Show>
-        </Show>
-
-        <Show when={props.discardMode}>
-          <div class="flex items-center gap-2">
-            <button
-              class="btn-danger flex-1"
-              onClick={handleDiscard}
-              disabled={props.discardCandidate === null}
-              type="button"
-            >
-              {props.discardCandidate
-                ? `Defausser ${AGENT_LABELS[props.discardCandidate]}`
-                : 'Choisissez une carte'}
-            </button>
-            <button class="btn-secondary px-4" onClick={props.onToggleDiscardMode} type="button">
-              Retour
-            </button>
-          </div>
+        </div>
+        <Show
+          when={props.selectedFaceUp !== null && props.selectedFaceDown !== null && !canPlay()}
+        >
+          <p class="text-[11px] font-bold text-spy-danger text-center">
+            Les deux cartes doivent etre differentes.
+          </p>
         </Show>
       </Show>
 
