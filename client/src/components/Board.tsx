@@ -18,8 +18,8 @@ const Board: Component<BoardProps> = (props) => {
   const SVG_SIZE = 320;
   const CX = SVG_SIZE / 2;
   const CY = SVG_SIZE / 2;
-  const TRACK_R = 120;
-  const CELL_R = 16;
+  const TRACK_R = 128;
+  const CELL_R = 17;
 
   const cells = createMemo(() =>
     Array.from({ length: BOARD_CELLS }, (_, i) => ({
@@ -34,28 +34,33 @@ const Board: Component<BoardProps> = (props) => {
   };
 
   const youPid = () => props.view.you;
-
-  const p1Color = () => (youPid() === 'p1' ? '#3b82f6' : '#ef4444');
-  const p2Color = () => (youPid() === 'p2' ? '#3b82f6' : '#ef4444');
+  const colorFor = (pid: PlayerId) => (youPid() === pid ? '#6C5CE7' : '#FF5C7A');
 
   return (
-    <div class="flex flex-col items-center gap-2">
+    <div class="flex flex-col items-center gap-2 w-full">
       <svg
-        width={SVG_SIZE}
-        height={SVG_SIZE}
         viewBox={`0 0 ${SVG_SIZE} ${SVG_SIZE}`}
-        class="w-full max-w-xs sm:max-w-sm"
+        class="w-full max-w-[78vh] sm:max-w-sm"
         aria-label="Plateau de jeu"
       >
-        {/* Track circle guide */}
+        <defs>
+          <radialGradient id="board-face" cx="50%" cy="40%" r="70%">
+            <stop offset="0%" stop-color="#ffffff" />
+            <stop offset="100%" stop-color="#fdeccf" />
+          </radialGradient>
+        </defs>
+
+        {/* Board face */}
+        <circle cx={CX} cy={CY} r={TRACK_R + CELL_R + 10} fill="url(#board-face)" />
         <circle
           cx={CX}
           cy={CY}
           r={TRACK_R}
           fill="none"
-          stroke="#2a3a5e"
-          stroke-width="2"
-          stroke-dasharray="4 4"
+          stroke="#F1DDC2"
+          stroke-width="3"
+          stroke-dasharray="2 10"
+          stroke-linecap="round"
         />
 
         {/* Cells */}
@@ -65,82 +70,54 @@ const Board: Component<BoardProps> = (props) => {
               cx={cell.x}
               cy={cell.y}
               r={CELL_R}
-              fill="#1a2236"
-              stroke="#2a3a5e"
-              stroke-width="1.5"
+              fill="#ffffff"
+              stroke="#EAD9BE"
+              stroke-width="2"
             />
             <text
               x={cell.x}
               y={cell.y + 4}
               text-anchor="middle"
-              font-size="10"
-              fill="#64748b"
+              font-size="11"
+              font-weight="700"
+              fill="#B9A98C"
             >
               {cell.i}
             </text>
           </g>
         ))}
 
-        {/* P1 pawn */}
-        <circle
-          cx={pawnPos('p1').x - 6}
-          cy={pawnPos('p1').y}
-          r={9}
-          fill={p1Color()}
-          stroke="white"
-          stroke-width="2"
-          style={{ transition: 'cx 0.6s ease-in-out, cy 0.6s ease-in-out' }}
-        />
-        <text
-          x={pawnPos('p1').x - 6}
-          y={pawnPos('p1').y + 4}
-          text-anchor="middle"
-          font-size="9"
-          fill="white"
-          font-weight="bold"
-          style={{ transition: 'x 0.6s ease-in-out, y 0.6s ease-in-out' }}
+        {/* Pawns: transform-based, springy travel. Slight offset so both are
+            visible when sharing a cell. */}
+        <g
+          class="pawn-move"
+          style={{ transform: `translate(${pawnPos('p1').x - 6}px, ${pawnPos('p1').y}px)` }}
         >
-          P1
-        </text>
-
-        {/* P2 pawn */}
-        <circle
-          cx={pawnPos('p2').x + 6}
-          cy={pawnPos('p2').y}
-          r={9}
-          fill={p2Color()}
-          stroke="white"
-          stroke-width="2"
-          style={{ transition: 'cx 0.6s ease-in-out, cy 0.6s ease-in-out' }}
-        />
-        <text
-          x={pawnPos('p2').x + 6}
-          y={pawnPos('p2').y + 4}
-          text-anchor="middle"
-          font-size="9"
-          fill="white"
-          font-weight="bold"
-          style={{ transition: 'x 0.6s ease-in-out, y 0.6s ease-in-out' }}
+          <circle r={12} fill={colorFor('p1')} stroke="white" stroke-width="3" />
+          <text text-anchor="middle" y={4} font-size="10" font-weight="800" fill="white">
+            P1
+          </text>
+        </g>
+        <g
+          class="pawn-move"
+          style={{ transform: `translate(${pawnPos('p2').x + 6}px, ${pawnPos('p2').y}px)` }}
         >
-          P2
-        </text>
+          <circle r={12} fill={colorFor('p2')} stroke="white" stroke-width="3" />
+          <text text-anchor="middle" y={4} font-size="10" font-weight="800" fill="white">
+            P2
+          </text>
+        </g>
       </svg>
 
       {/* Legend */}
-      <div class="flex gap-4 text-xs text-spy-muted">
-        <span class="flex items-center gap-1">
-          <span
-            class="inline-block w-3 h-3 rounded-full"
-            style={{ background: youPid() === 'p1' ? '#3b82f6' : '#ef4444' }}
-          />
-          P1 {youPid() === 'p1' ? '(vous)' : '(adversaire)'}
+      <div class="flex gap-4 text-xs font-bold text-spy-muted">
+        <span class="flex items-center gap-1.5">
+          <span class="inline-block w-3 h-3 rounded-full" style={{ background: colorFor('p1') }} />
+          P1 {youPid() === 'p1' ? '(vous)' : '(adv.)'}
         </span>
-        <span class="flex items-center gap-1">
-          <span
-            class="inline-block w-3 h-3 rounded-full"
-            style={{ background: youPid() === 'p2' ? '#3b82f6' : '#ef4444' }}
-          />
-          P2 {youPid() === 'p2' ? '(vous)' : '(adversaire)'}
+        <span class="flex items-center gap-1.5">
+          <span class="inline-block w-3 h-3 rounded-full" style={{ background: colorFor('p2') }} />
+          P2 {youPid() === 'p2' ? '(vous)' : '(adv.)'}
         </span>
       </div>
     </div>
