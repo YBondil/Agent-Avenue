@@ -5,7 +5,8 @@ import type { ClientMessage } from './ws';
 
 import Lobby from './components/Lobby';
 import Board from './components/Board';
-import Hand from './components/Hand';
+import PlayerHand from './components/PlayerHand';
+import OpponentHand from './components/OpponentHand';
 import PlayZone from './components/PlayZone';
 import ActionPanel from './components/ActionPanel';
 import Status from './components/Status';
@@ -150,6 +151,17 @@ const App: Component = () => {
 
   const currentView = () => view();
   const phase = () => currentView()?.phase ?? 'lobby';
+  const myTurn = () =>
+    currentView() !== null && currentView()!.you === currentView()!.activePlayer;
+
+  // Simplified turn label for the top zone.
+  const turnText = () => {
+    const v = currentView();
+    if (!v) return '';
+    if (v.phase === 'ended') return 'Partie terminee';
+    if (v.phase === 'recruit') return myTurn() ? 'Adversaire recrute...' : 'A vous de recruter';
+    return myTurn() ? 'A vous de jouer' : "Tour de l'adversaire";
+  };
 
   return (
     <>
@@ -167,65 +179,67 @@ const App: Component = () => {
         />
       </Show>
 
-      {/* Game table */}
+      {/* Game table: vertical, touch-first, fixed top and bottom zones */}
       <Show when={phase() !== 'lobby' && roomCode() !== null && currentView() !== null}>
-        <div class="min-h-screen p-3 sm:p-4 max-w-2xl mx-auto flex flex-col gap-4">
-          {/* Header */}
-          <div class="flex items-center justify-between">
-            <div class="text-lg font-bold text-spy-text tracking-tight">Agent Avenue</div>
-            <div class="text-xs text-spy-muted font-mono">{roomCode()}</div>
-          </div>
+        <div class="h-screen flex flex-col overflow-hidden mx-auto max-w-xl">
+          {/* TOP ZONE: turn indicator + compact status + opponent hand */}
+          <header class="shrink-0 px-3 pt-3 pb-2 flex flex-col gap-2">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <div
+                class={`flex items-center gap-2 rounded-full px-3 py-1.5 font-extrabold text-sm border-2 ${
+                  myTurn() && phase() !== 'ended'
+                    ? 'bg-spy-success/15 border-spy-success text-spy-success'
+                    : 'bg-spy-card border-spy-border text-spy-muted'
+                }`}
+              >
+                <Show when={myTurn() && phase() !== 'ended'}>
+                  <span class="w-2 h-2 rounded-full bg-spy-success animate-pulse-dot" />
+                </Show>
+                {turnText()}
+              </div>
+              <Status view={currentView()!} />
+            </div>
+            <OpponentHand count={currentView()!.oppHandCount} />
+          </header>
 
-          {/* Win banner */}
-          <Show when={phase() === 'ended' && currentView()?.winner !== null}>
-            <WinBanner
-              winner={currentView()!.winner!}
-              you={currentView()!.you}
-              winReason={currentView()!.winReason}
-              onReset={() => handleSend({ type: 'reset' })}
-            />
-          </Show>
+          {/* CENTER ZONE: board + play zones (scrolls only if needed) */}
+          <main class="flex-1 min-h-0 overflow-y-auto px-3 flex flex-col items-center justify-center gap-3 py-1">
+            <Show when={phase() === 'ended' && currentView()?.winner !== null}>
+              <WinBanner
+                winner={currentView()!.winner!}
+                you={currentView()!.you}
+                winReason={currentView()!.winReason}
+                onReset={() => handleSend({ type: 'reset' })}
+              />
+            </Show>
+            <Board view={currentView()!} />
+            <PlayZone view={currentView()!} />
+          </main>
 
-          {/* Board */}
-          <Board view={currentView()!} />
-
-          {/* Status */}
-          <Status view={currentView()!} />
-
-          {/* Play zone */}
-          <PlayZone view={currentView()!} />
-
-          {/* Hand */}
-          <Show when={currentView()!.yourHand.length > 0 || currentView()!.oppHandCount > 0}>
-            <Hand
+          {/* BOTTOM ZONE: player hand + action panel, anchored */}
+          <footer class="shrink-0 panel rounded-b-none rounded-t-4xl border-b-0 px-3 pt-3 pb-4 flex flex-col gap-3">
+            <PlayerHand
               hand={currentView()!.yourHand}
-              oppHandCount={currentView()!.oppHandCount}
               selectedFaceUp={selectedFaceUp()}
               selectedFaceDown={selectedFaceDown()}
               onSelectFaceUp={handleSelectFaceUp}
               onSelectFaceDown={handleSelectFaceDown}
-              selectionMode={
-                phase() === 'play' && currentView()!.you === currentView()!.activePlayer
-                  ? 'picking'
-                  : 'none'
-              }
+              selectionMode={phase() === 'play' && myTurn() ? 'picking' : 'none'}
               discardCandidate={discardCandidate()}
               onSelectDiscard={handleSelectDiscard}
               discardMode={discardMode()}
             />
-          </Show>
-
-          {/* Action panel */}
-          <ActionPanel
-            view={currentView()!}
-            selectedFaceUp={selectedFaceUp()}
-            selectedFaceDown={selectedFaceDown()}
-            discardCandidate={discardCandidate()}
-            discardMode={discardMode()}
-            onSend={handleSend}
-            onToggleDiscardMode={handleToggleDiscardMode}
-            onResetSelection={resetSelection}
-          />
+            <ActionPanel
+              view={currentView()!}
+              selectedFaceUp={selectedFaceUp()}
+              selectedFaceDown={selectedFaceDown()}
+              discardCandidate={discardCandidate()}
+              discardMode={discardMode()}
+              onSend={handleSend}
+              onToggleDiscardMode={handleToggleDiscardMode}
+              onResetSelection={resetSelection}
+            />
+          </footer>
         </div>
       </Show>
     </>
