@@ -1,6 +1,6 @@
 import { Component, For, createMemo } from 'solid-js';
 import type { AgentType, PlayerId, PlayerView } from '../types';
-import { AGENT_LABELS } from '../constants';
+import { AGENT_COLORS, AGENT_LABELS } from '../constants';
 
 interface PlayZoneProps {
   view: PlayerView;
@@ -8,49 +8,61 @@ interface PlayZoneProps {
 
 function groupCards(cards: AgentType[]): Map<AgentType, number> {
   const map = new Map<AgentType, number>();
-  for (const card of cards) {
-    map.set(card, (map.get(card) ?? 0) + 1);
-  }
+  for (const card of cards) map.set(card, (map.get(card) ?? 0) + 1);
   return map;
 }
 
-function badgeClass(card: AgentType, count: number): string {
-  if (card === 'cryptologue' && count >= 3) return 'bg-spy-success text-white';
-  if (card === 'risqueTout' && count >= 3) return 'bg-spy-danger text-white';
-  if (card === 'cryptologue' && count === 2) return 'bg-spy-warn text-black';
-  if (card === 'risqueTout' && count === 2) return 'bg-spy-warn text-black';
-  return 'bg-spy-border text-spy-text';
+// Ring color for counts that matter: 3 crypto wins, 3 risque loses, 2 is a warning.
+function ringClass(card: AgentType, count: number): string {
+  if (card === 'cryptologue' && count >= 3) return 'ring-2 ring-spy-success';
+  if (card === 'risqueTout' && count >= 3) return 'ring-2 ring-spy-danger';
+  if ((card === 'cryptologue' || card === 'risqueTout') && count === 2)
+    return 'ring-2 ring-spy-warn';
+  return '';
 }
 
 interface ZoneProps {
-  pid: PlayerId;
   cards: AgentType[];
   label: string;
+  mine: boolean;
 }
 
 const PlayerZone: Component<ZoneProps> = (props) => {
-  const groups = createMemo(() => groupCards(props.cards));
+  const groups = createMemo(() => [...groupCards(props.cards).entries()]);
 
   return (
-    <div class="bg-spy-surface rounded-lg p-3 border border-spy-border">
-      <div class="text-xs text-spy-muted uppercase tracking-wider mb-2">{props.label}</div>
-      <div class="flex flex-wrap gap-2">
-        <For each={[...groups().entries()]}>
+    <div
+      class={`rounded-2xl border-2 px-3 py-2 ${
+        props.mine
+          ? 'border-spy-accent/40 bg-spy-accent/5'
+          : 'border-spy-border bg-spy-card'
+      }`}
+    >
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-[11px] font-extrabold uppercase tracking-wider text-spy-muted">
+          {props.label}
+        </span>
+        <For each={groups()}>
           {([card, count]) => (
-            <div class="flex items-center gap-1 bg-spy-card rounded px-2 py-1 border border-spy-border">
-              <span class="text-xs text-spy-text">{AGENT_LABELS[card]}</span>
+            <span
+              class={`animate-card-enter inline-flex items-center gap-1.5 rounded-full bg-spy-surface border-2 border-spy-border pl-2 pr-1 py-0.5 shadow-card ${ringClass(card, count)}`}
+            >
               <span
-                class={`text-xs font-bold rounded-full px-1.5 py-0.5 ${badgeClass(card, count)}`}
+                class="w-2.5 h-2.5 rounded-full"
+                style={{ background: AGENT_COLORS[card] }}
+              />
+              <span class="text-[12px] font-bold text-spy-text">{AGENT_LABELS[card]}</span>
+              <span
+                class="text-[11px] font-extrabold text-white rounded-full px-1.5 py-0.5"
+                style={{ background: AGENT_COLORS[card] }}
               >
                 x{count}
               </span>
-            </div>
+            </span>
           )}
         </For>
-        <For each={groups().size === 0 ? ['empty'] : []}>
-          {() => (
-            <span class="text-xs text-spy-muted italic">Aucune carte recrutee</span>
-          )}
+        <For each={groups().length === 0 ? ['empty'] : []}>
+          {() => <span class="text-[12px] text-spy-muted italic">Aucune carte</span>}
         </For>
       </div>
     </div>
@@ -58,33 +70,21 @@ const PlayerZone: Component<ZoneProps> = (props) => {
 };
 
 const PlayZone: Component<PlayZoneProps> = (props) => {
-  const youPid = () => props.view.you;
-  const oppPid = (): PlayerId | null => {
-    if (props.view.you === 'p1') return 'p2';
-    if (props.view.you === 'p2') return 'p1';
-    return null;
-  };
+  const you = () => props.view.you;
+  const opp = (): PlayerId | null =>
+    you() === 'p1' ? 'p2' : you() === 'p2' ? 'p1' : null;
 
   return (
-    <div class="flex flex-col gap-2">
-      <div class="text-sm font-semibold text-spy-text mb-1">Zone de jeu</div>
-      {youPid() !== null ? (
+    <div class="flex flex-col gap-2 w-full">
+      {you() !== null ? (
         <>
-          <PlayerZone
-            pid={youPid()!}
-            cards={props.view.inPlay[youPid()!]}
-            label="Votre zone"
-          />
-          <PlayerZone
-            pid={oppPid()!}
-            cards={props.view.inPlay[oppPid()!]}
-            label="Zone adversaire"
-          />
+          <PlayerZone cards={props.view.inPlay[you()!]} label="Votre zone" mine={true} />
+          <PlayerZone cards={props.view.inPlay[opp()!]} label="Zone adverse" mine={false} />
         </>
       ) : (
         <>
-          <PlayerZone pid="p1" cards={props.view.inPlay.p1} label="Joueur 1" />
-          <PlayerZone pid="p2" cards={props.view.inPlay.p2} label="Joueur 2" />
+          <PlayerZone cards={props.view.inPlay.p1} label="Joueur 1" mine={false} />
+          <PlayerZone cards={props.view.inPlay.p2} label="Joueur 2" mine={false} />
         </>
       )}
     </div>
