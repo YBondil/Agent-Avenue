@@ -10,8 +10,8 @@ interface ActionPanelProps {
   onResetSelection: () => void;
 }
 
-// Floating action tokens for the active player's commit step and the rematch.
-// The recruit phase is handled by DilemmaArena, not here.
+// Tactile action tokens for the commit step and rematch. The recruit phase is
+// handled by DilemmaArena.
 const ActionPanel: Component<ActionPanelProps> = (props) => {
   const view = () => props.view;
   const you = () => view().you;
@@ -37,48 +37,43 @@ const ActionPanel: Component<ActionPanelProps> = (props) => {
   }
 
   return (
-    <div class="flex items-center justify-center gap-3 min-h-[44px]">
-      {/* Active player commit */}
+    <div class="flex items-center justify-center gap-3 min-h-[42px]">
       <Show when={phase() === 'play' && isActive()}>
         <Show when={props.selectedFaceUp !== null || props.selectedFaceDown !== null}>
           <button class="token-ghost" onClick={props.onResetSelection} type="button">
             Annuler
           </button>
         </Show>
-        <button class="token-cyan" onClick={handlePlay} disabled={!canPlay()} type="button">
+        <button class="token-gold" onClick={handlePlay} disabled={!canPlay()} type="button">
           Engager
         </button>
         <Show
           when={props.selectedFaceUp !== null && props.selectedFaceDown !== null && !canPlay()}
         >
-          <span class="text-[11px] font-bold text-spy-danger neon-text">Cartes identiques</span>
+          <span class="text-[11px] font-bold text-spy-danger">Cartes identiques</span>
         </Show>
       </Show>
 
-      {/* Active player waiting on the dilemma */}
       <Show when={phase() === 'recruit' && isActive()}>
-        <span class="text-spy-muted text-xs font-bold uppercase tracking-[0.3em]">
+        <span class="text-spy-muted text-xs font-bold uppercase tracking-[0.2em]">
           En attente du choix adverse
         </span>
       </Show>
 
-      {/* Non-active waiting for the opponent to commit */}
       <Show when={phase() === 'play' && !isActive() && you() !== null}>
-        <span class="text-spy-muted text-xs font-bold uppercase tracking-[0.3em]">
-          L'adversaire prepare son duel
+        <span class="text-spy-muted text-xs font-bold uppercase tracking-[0.2em]">
+          L'adversaire prepare son tour
         </span>
       </Show>
 
-      {/* Rematch */}
       <Show when={phase() === 'ended'}>
-        <button class="token-magenta" onClick={() => props.onSend({ type: 'reset' })} type="button">
+        <button class="token-green" onClick={() => props.onSend({ type: 'reset' })} type="button">
           Rejouer
         </button>
       </Show>
 
-      {/* Spectator */}
       <Show when={you() === null}>
-        <span class="text-spy-muted text-xs font-bold uppercase tracking-[0.3em]">Spectateur</span>
+        <span class="text-spy-muted text-xs font-bold uppercase tracking-[0.2em]">Spectateur</span>
       </Show>
     </div>
   );
