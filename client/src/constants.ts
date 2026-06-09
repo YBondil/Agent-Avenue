@@ -11,6 +11,18 @@ export const AGENT_LABELS: Record<AgentType, string> = {
   taupe: 'Taupe',
 };
 
+// Distinct accent color per agent for a playful, easily-scanned look.
+export const AGENT_COLORS: Record<AgentType, string> = {
+  agentDouble: '#6C5CE7', // indigo
+  saboteur: '#FF5C7A',    // coral
+  mercenaire: '#FF9F1C',  // amber
+  risqueTout: '#EF4444',  // red
+  cryptologue: '#10B981', // emerald
+  sentinelle: '#00BCD4',  // cyan
+  acolyte: '#F59E0B',     // gold
+  taupe: '#8B5E3C',       // brown
+};
+
 export type EffectEntry = {
   label: string;
   one: string;
