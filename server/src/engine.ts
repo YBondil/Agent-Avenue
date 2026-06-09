@@ -10,7 +10,6 @@ import type {
 } from './types';
 import {
   HAND_SIZE,
-  MAX_DISCARDS,
   TRACK,
   buildDeck,
   catches,
@@ -30,7 +29,6 @@ export function createRoom(code: string, rng: () => number = Math.random): RoomS
     hands: { p1: [], p2: [] },
     inPlay: { p1: [], p2: [] },
     positions: { p1: 0, p2: 7 }, // opposite cells on the ring
-    discardsUsed: { p1: 0, p2: 0 },
     activePlayer: 'p1',
     phase: 'lobby',
     proposedCards: null,
@@ -59,18 +57,6 @@ export function startGame(state: RoomState): string | null {
   draw(state, 'p1', HAND_SIZE);
   draw(state, 'p2', HAND_SIZE);
   state.phase = 'play';
-  return null;
-}
-
-// Active player discards one card (face down) and redraws. Capped per player.
-function applyDiscard(state: RoomState, who: PlayerId, card: AgentType): string | null {
-  if (state.phase !== 'play') return "Ce n'est pas la phase de jeu.";
-  if (who !== state.activePlayer) return "Ce n'est pas votre tour.";
-  if (state.discardsUsed[who] >= MAX_DISCARDS) return 'Plus de défausses disponibles.';
-  if (state.deck.length === 0) return 'La pioche est vide.';
-  if (!removeOne(state.hands[who], card)) return "Carte absente de votre main.";
-  state.discardsUsed[who] += 1;
-  draw(state, who, 1);
   return null;
 }
 
@@ -230,8 +216,6 @@ export function applyAction(
   switch (msg.type) {
     case 'start':
       return startGame(state);
-    case 'discard':
-      return applyDiscard(state, who, msg.card);
     case 'play':
       return applyPlay(state, who, msg.faceUp, msg.faceDown);
     case 'recruit':
@@ -267,7 +251,6 @@ export function viewFor(state: RoomState, you: PlayerId | null): PlayerView {
     deckCount: state.deck.length,
     inPlay: state.inPlay,
     positions: state.positions,
-    discardsUsed: state.discardsUsed,
     activePlayer: state.activePlayer,
     phase: state.phase,
     proposed,
