@@ -58,7 +58,7 @@ const DilemmaArena: Component<DilemmaArenaProps> = (props) => {
               type="button"
               disabled={isActive() || chosen() !== null}
               onClick={() => pick('faceUp')}
-              class={`block w-[18vh] max-w-[110px] transition-all duration-300 ease-out ${
+              class={`block w-[clamp(98px,23dvh,150px)] transition-all duration-300 ease-out ${
                 !isActive() && !chosen() ? 'hover:-translate-y-2 hover:scale-105' : ''
               }`}
               style={flight('faceUp')}
@@ -70,7 +70,7 @@ const DilemmaArena: Component<DilemmaArenaProps> = (props) => {
               type="button"
               disabled={isActive() || chosen() !== null}
               onClick={() => pick('faceDown')}
-              class={`block w-[18vh] max-w-[110px] transition-all duration-300 ease-out ${
+              class={`block w-[clamp(98px,23dvh,150px)] transition-all duration-300 ease-out ${
                 !isActive() && !chosen() ? 'hover:-translate-y-2 hover:scale-105' : ''
               }`}
               style={flight('faceDown')}
