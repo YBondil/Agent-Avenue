@@ -1,92 +1,57 @@
 import { Component, For, createMemo } from 'solid-js';
 import type { AgentType, PlayerId, PlayerView } from '../types';
-import { AGENT_COLORS, AGENT_LABELS } from '../constants';
+import Card from './Card';
 
 interface PlayZoneProps {
   view: PlayerView;
 }
 
-function groupCards(cards: AgentType[]): Map<AgentType, number> {
+function groupCards(cards: AgentType[]): { card: AgentType; count: number }[] {
   const map = new Map<AgentType, number>();
-  for (const card of cards) map.set(card, (map.get(card) ?? 0) + 1);
-  return map;
+  for (const c of cards) map.set(c, (map.get(c) ?? 0) + 1);
+  return [...map.entries()].map(([card, count]) => ({ card, count }));
 }
 
-// Ring color for counts that matter: 3 crypto wins, 3 risque loses, 2 is a warning.
-function ringClass(card: AgentType, count: number): string {
-  if (card === 'cryptologue' && count >= 3) return 'ring-2 ring-spy-success';
-  if (card === 'risqueTout' && count >= 3) return 'ring-2 ring-spy-danger';
-  if ((card === 'cryptologue' || card === 'risqueTout') && count === 2)
-    return 'ring-2 ring-spy-warn';
-  return '';
-}
+// Deterministic small rotation in [-2, 2] degrees for an asymmetric, hand-placed feel.
+const tilt = (i: number) => ((i * 37) % 5) - 2;
 
-interface ZoneProps {
+interface ClusterProps {
   cards: AgentType[];
-  label: string;
+  side: 'left' | 'right';
   mine: boolean;
 }
 
-const PlayerZone: Component<ZoneProps> = (props) => {
-  const groups = createMemo(() => [...groupCards(props.cards).entries()]);
-
+const Cluster: Component<ClusterProps> = (props) => {
+  const groups = createMemo(() => groupCards(props.cards));
   return (
     <div
-      class={`rounded-2xl border-2 px-3 py-2 ${
-        props.mine
-          ? 'border-spy-accent/40 bg-spy-accent/5'
-          : 'border-spy-border bg-spy-card'
-      }`}
+      class="absolute top-1/2 -translate-y-1/2 w-[30%] max-w-[150px] flex flex-wrap justify-center gap-x-1 gap-y-2"
+      style={{ [props.side]: '8%' }}
     >
-      <div class="flex items-center gap-2 flex-wrap">
-        <span class="text-[11px] font-extrabold uppercase tracking-wider text-spy-muted">
-          {props.label}
-        </span>
-        <For each={groups()}>
-          {([card, count]) => (
-            <span
-              class={`animate-card-enter inline-flex items-center gap-1.5 rounded-full bg-spy-surface border-2 border-spy-border pl-2 pr-1 py-0.5 shadow-card ${ringClass(card, count)}`}
-            >
-              <span
-                class="w-2.5 h-2.5 rounded-full"
-                style={{ background: AGENT_COLORS[card] }}
-              />
-              <span class="text-[12px] font-bold text-spy-text">{AGENT_LABELS[card]}</span>
-              <span
-                class="text-[11px] font-extrabold text-white rounded-full px-1.5 py-0.5"
-                style={{ background: AGENT_COLORS[card] }}
-              >
-                x{count}
-              </span>
-            </span>
-          )}
-        </For>
-        <For each={groups().length === 0 ? ['empty'] : []}>
-          {() => <span class="text-[12px] text-spy-muted italic">Aucune carte</span>}
-        </For>
-      </div>
+      <For each={groups()}>
+        {(g, i) => (
+          <div class="w-12" style={{ transform: `rotate(${tilt(i())}deg)` }}>
+            <Card type={g.card} count={g.count} glow={props.mine} enter />
+          </div>
+        )}
+      </For>
     </div>
   );
 };
 
+// Recruited cards laid out on either side of the arena interior.
 const PlayZone: Component<PlayZoneProps> = (props) => {
   const you = () => props.view.you;
-  const opp = (): PlayerId | null =>
-    you() === 'p1' ? 'p2' : you() === 'p2' ? 'p1' : null;
+  const opp = (): PlayerId => (you() === 'p1' ? 'p2' : 'p1');
+
+  // Your cards sit on the right (near your hand), opponent's on the left.
+  const mySide = you() ?? 'p1';
+  const oppSide = you() ? opp() : 'p2';
 
   return (
-    <div class="flex flex-col gap-2 w-full">
-      {you() !== null ? (
-        <>
-          <PlayerZone cards={props.view.inPlay[you()!]} label="Votre zone" mine={true} />
-          <PlayerZone cards={props.view.inPlay[opp()!]} label="Zone adverse" mine={false} />
-        </>
-      ) : (
-        <>
-          <PlayerZone cards={props.view.inPlay.p1} label="Joueur 1" mine={false} />
-          <PlayerZone cards={props.view.inPlay.p2} label="Joueur 2" mine={false} />
-        </>
-      )}
+    <div class="absolute inset-0 pointer-events-none">
+      <Cluster cards={props.view.inPlay[oppSide]} side="left" mine={false} />
+      <Cluster cards={props.view.inPlay[mySide]} side="right" mine={you() !== null} />
     </div>
   );
 };
