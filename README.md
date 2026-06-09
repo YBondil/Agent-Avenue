@@ -14,9 +14,9 @@ Deck de 38 cartes. Effet selon le nombre d'exemplaires de la carte dans votre zo
 | Agent | 1x | 2x | 3+x | Quantite |
 |---|---|---|---|---|
 | Agent Double | -1 | +6 | -1 | 6 |
-| Saboteur | -1 | 0 | +2 | 6 |
-| Mercenaire | +2 | +1 | +3 | 6 |
-| Risque-tout | +3 | +2 | DEFAITE | 6 |
+| Saboteur | -1 | -1 | -2 | 6 |
+| Mercenaire | +1 | +2 | +3 | 6 |
+| Risque-tout | +2 | +3 | DEFAITE | 6 |
 | Cryptologue | 0 | 0 | VICTOIRE | 6 |
 | Sentinelle | 0 | +2 | +6 | 6 |
 | Acolyte | +4 | - | - | 1 |
