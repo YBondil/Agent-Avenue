@@ -1,5 +1,5 @@
-import { Component, Show, createSignal } from 'solid-js';
-import type { PlayerView } from '../types';
+import { Component, For, Show, createMemo, createSignal } from 'solid-js';
+import type { AgentType, PlayerId, PlayerView } from '../types';
 import Card from './Card';
 
 interface DilemmaArenaProps {
@@ -7,15 +7,28 @@ interface DilemmaArenaProps {
   onRecruit: (choice: 'faceUp' | 'faceDown') => void;
 }
 
+function group(cards: AgentType[]): { card: AgentType; count: number }[] {
+  const m = new Map<AgentType, number>();
+  for (const c of cards) m.set(c, (m.get(c) ?? 0) + 1);
+  return [...m.entries()].map(([card, count]) => ({ card, count }));
+}
+
 // The recruit "dilemma": the two proposed cards sit on a dedicated central plate
 // on the table. The recruiting player picks one; the rest of the table (hands,
-// pawns, opponent backs) stays fully visible behind it.
+// pawns, opponent backs) stays fully visible behind it. Two buttons let either
+// player inspect the cards currently in play before deciding.
 const DilemmaArena: Component<DilemmaArenaProps> = (props) => {
   const view = () => props.view;
   const isActive = () => view().you !== null && view().activePlayer === view().you;
   const proposed = () => view().proposed;
 
   const [chosen, setChosen] = createSignal<'faceUp' | 'faceDown' | null>(null);
+  const [viewing, setViewing] = createSignal<'me' | 'opp' | null>(null);
+
+  const me = (): PlayerId => view().you ?? 'p1';
+  const opp = (): PlayerId => (me() === 'p1' ? 'p2' : 'p1');
+  const cardsInPlay = (which: 'me' | 'opp') => view().inPlay[which === 'me' ? me() : opp()];
+  const groups = createMemo(() => (viewing() ? group(cardsInPlay(viewing()!)) : []));
 
   function pick(choice: 'faceUp' | 'faceDown') {
     if (isActive() || chosen()) return;
@@ -83,7 +96,67 @@ const DilemmaArena: Component<DilemmaArenaProps> = (props) => {
             </button>
           </div>
         </Show>
+
+        {/* Inspect cards currently in play */}
+        <Show when={!chosen()}>
+          <div class="relative flex gap-2">
+            <button
+              type="button"
+              class="token-ghost px-3 py-1.5 text-[11px]"
+              onClick={() => setViewing((v) => (v === 'me' ? null : 'me'))}
+            >
+              Mon jeu ({cardsInPlay('me').length})
+            </button>
+            <button
+              type="button"
+              class="token-ghost px-3 py-1.5 text-[11px]"
+              onClick={() => setViewing((v) => (v === 'opp' ? null : 'opp'))}
+            >
+              Jeu adverse ({cardsInPlay('opp').length})
+            </button>
+          </div>
+        </Show>
       </div>
+
+      {/* In-play viewer overlay */}
+      <Show when={viewing()}>
+        <div
+          class="absolute inset-0 z-40 flex items-center justify-center bg-black/45 pointer-events-auto"
+          onClick={() => setViewing(null)}
+        >
+          <div
+            class="bg-spy-surface rounded-3xl border-2 border-spy-border shadow-card-lg p-4 mx-4 max-w-[92%]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div class="flex items-center justify-between mb-3 gap-4">
+              <span class="text-sm font-bold uppercase tracking-wider text-spy-accent">
+                {viewing() === 'me' ? 'Votre jeu' : "Jeu de l'adversaire"}
+              </span>
+              <button
+                type="button"
+                class="token-ghost px-3 py-1 text-[11px]"
+                onClick={() => setViewing(null)}
+              >
+                Fermer
+              </button>
+            </div>
+            <Show
+              when={groups().length > 0}
+              fallback={<div class="text-spy-muted text-sm italic py-6 text-center">Aucune carte en jeu</div>}
+            >
+              <div class="flex flex-wrap justify-center gap-3 max-h-[58dvh] overflow-y-auto">
+                <For each={groups()}>
+                  {(g) => (
+                    <div class="w-[clamp(78px,12dvh,104px)]">
+                      <Card type={g.card} count={g.count} />
+                    </div>
+                  )}
+                </For>
+              </div>
+            </Show>
+          </div>
+        </div>
+      </Show>
     </div>
   );
 };
