@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-spy-bg text-spy-text min-h-screen;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+@layer components {
+  .card-back {
+    @apply bg-spy-card border border-spy-border rounded-lg flex items-center justify-center text-spy-muted font-bold;
+  }
+
+  .agent-card {
+    @apply bg-spy-card border-2 border-spy-border rounded-lg p-3 cursor-pointer transition-all duration-150 select-none;
+  }
+
+  .agent-card:hover {
+    @apply border-spy-accent;
+  }
+
+  .agent-card.selected {
+    @apply border-spy-accent bg-spy-accent/20;
+  }
+
+  .agent-card.face-up-selected {
+    @apply border-spy-success bg-spy-success/20;
+  }
+
+  .agent-card.face-down-selected {
+    @apply border-spy-warn bg-spy-warn/20;
+  }
+
+  .btn {
+    @apply px-4 py-2 rounded-lg font-semibold transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn bg-spy-accent text-white hover:bg-blue-500 active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply btn bg-spy-surface text-spy-text border border-spy-border hover:border-spy-accent active:scale-95;
+  }
+
+  .btn-danger {
+    @apply btn bg-spy-danger text-white hover:bg-red-500 active:scale-95;
+  }
+
+  .btn-success {
+    @apply btn bg-spy-success text-white hover:bg-green-500 active:scale-95;
+  }
+}
+
+@layer utilities {
+  .pawn-transition {
+    transition: cx 0.6s ease-in-out, cy 0.6s ease-in-out;
+  }
+}
