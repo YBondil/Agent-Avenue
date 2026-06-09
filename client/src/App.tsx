@@ -9,7 +9,7 @@ import PlayerHand from './components/PlayerHand';
 import OpponentHand from './components/OpponentHand';
 import PlayZone from './components/PlayZone';
 import ActionPanel from './components/ActionPanel';
-import Status from './components/Status';
+import DilemmaArena from './components/DilemmaArena';
 import Toast from './components/Toast';
 import WinBanner from './components/WinBanner';
 
@@ -141,15 +141,6 @@ const App: Component = () => {
   const myTurn = () =>
     currentView() !== null && currentView()!.you === currentView()!.activePlayer;
 
-  // Simplified turn label for the top zone.
-  const turnText = () => {
-    const v = currentView();
-    if (!v) return '';
-    if (v.phase === 'ended') return 'Partie terminee';
-    if (v.phase === 'recruit') return myTurn() ? 'Adversaire recrute...' : 'A vous de recruter';
-    return myTurn() ? 'A vous de jouer' : "Tour de l'adversaire";
-  };
-
   return (
     <>
       <Toast message={toast()} />
@@ -166,31 +157,29 @@ const App: Component = () => {
         />
       </Show>
 
-      {/* Game table: vertical, touch-first, fixed top and bottom zones */}
+      {/* Holographic duel arena: Opponent (top) / Arena (center) / Player (bottom) */}
       <Show when={phase() !== 'lobby' && roomCode() !== null && currentView() !== null}>
-        <div class="h-screen flex flex-col overflow-hidden mx-auto max-w-xl">
-          {/* TOP ZONE: turn indicator + compact status + opponent hand */}
-          <header class="shrink-0 px-3 pt-3 pb-2 flex flex-col gap-2">
-            <div class="flex items-center justify-between gap-2 flex-wrap">
-              <div
-                class={`flex items-center gap-2 rounded-full px-3 py-1.5 font-extrabold text-sm border-2 ${
-                  myTurn() && phase() !== 'ended'
-                    ? 'bg-spy-success/15 border-spy-success text-spy-success'
-                    : 'bg-spy-card border-spy-border text-spy-muted'
-                }`}
-              >
-                <Show when={myTurn() && phase() !== 'ended'}>
-                  <span class="w-2 h-2 rounded-full bg-spy-success animate-pulse-dot" />
-                </Show>
-                {turnText()}
-              </div>
-              <Status view={currentView()!} />
-            </div>
-            <OpponentHand count={currentView()!.oppHandCount} />
+        <div class="h-screen flex flex-col overflow-hidden mx-auto max-w-3xl">
+          {/* TOP ZONE: opponent's dealt backs */}
+          <header class="shrink-0 pt-2">
+            <OpponentHand
+              count={currentView()!.oppHandCount}
+              active={!myTurn() && phase() !== 'ended'}
+            />
           </header>
 
-          {/* CENTER ZONE: board + play zones (scrolls only if needed) */}
-          <main class="flex-1 min-h-0 overflow-y-auto px-3 flex flex-col items-center justify-center gap-3 py-1">
+          {/* CENTER ZONE: the arena. Board, play zones, dilemma and result overlay. */}
+          <main class="relative flex-1 min-h-0">
+            <Board view={currentView()!} />
+            <PlayZone view={currentView()!} />
+
+            <Show when={phase() === 'recruit' && currentView()!.proposed !== null}>
+              <DilemmaArena
+                view={currentView()!}
+                onRecruit={(choice) => handleSend({ type: 'recruit', choice })}
+              />
+            </Show>
+
             <Show when={phase() === 'ended' && currentView()?.winner !== null}>
               <WinBanner
                 winner={currentView()!.winner!}
@@ -199,12 +188,17 @@ const App: Component = () => {
                 onReset={() => handleSend({ type: 'reset' })}
               />
             </Show>
-            <Board view={currentView()!} />
-            <PlayZone view={currentView()!} />
           </main>
 
-          {/* BOTTOM ZONE: player hand + action panel, anchored */}
-          <footer class="shrink-0 panel rounded-b-none rounded-t-4xl border-b-0 px-3 pt-3 pb-4 flex flex-col gap-3">
+          {/* BOTTOM ZONE: action tokens + the player's fanned hand */}
+          <footer class="shrink-0 pb-3 flex flex-col gap-1">
+            <ActionPanel
+              view={currentView()!}
+              selectedFaceUp={selectedFaceUp()}
+              selectedFaceDown={selectedFaceDown()}
+              onSend={handleSend}
+              onResetSelection={resetSelection}
+            />
             <PlayerHand
               hand={currentView()!.yourHand}
               selectedFaceUp={selectedFaceUp()}
@@ -212,13 +206,6 @@ const App: Component = () => {
               onSelectFaceUp={handleSelectFaceUp}
               onSelectFaceDown={handleSelectFaceDown}
               selectionMode={phase() === 'play' && myTurn() ? 'picking' : 'none'}
-            />
-            <ActionPanel
-              view={currentView()!}
-              selectedFaceUp={selectedFaceUp()}
-              selectedFaceDown={selectedFaceDown()}
-              onSend={handleSend}
-              onResetSelection={resetSelection}
             />
           </footer>
         </div>
