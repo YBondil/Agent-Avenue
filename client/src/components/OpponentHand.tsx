@@ -1,22 +1,34 @@
 import { Component, For } from 'solid-js';
+import Card from './Card';
 
 interface OpponentHandProps {
   count: number;
+  active?: boolean; // opponent is the active player
 }
 
-// Opponent's hand shown as face-down card backs (top zone).
+// Opponent's hand: holographic backs fanned downward from the top edge with a
+// negative overlap, hanging into the arena like a dealt spread.
 const OpponentHand: Component<OpponentHandProps> = (props) => {
   return (
-    <div class="flex items-center gap-2">
-      <span class="text-[11px] font-bold uppercase tracking-wider text-spy-muted whitespace-nowrap">
-        Adversaire
-      </span>
-      <div class="flex gap-1.5">
+    <div class="flex justify-center">
+      <div class="flex -space-x-7">
         <For each={Array.from({ length: props.count })}>
-          {() => <div class="card-back w-8 h-11 text-sm">?</div>}
-        </For>
-        <For each={props.count === 0 ? ['empty'] : []}>
-          {() => <span class="text-xs text-spy-muted italic">Main vide</span>}
+          {(_, i) => {
+            const n = props.count;
+            const mid = (n - 1) / 2;
+            const offset = i() - mid;
+            return (
+              <div
+                class="w-14 transition-transform duration-300"
+                style={{
+                  transform: `translateY(${Math.abs(offset) * 5}px) rotate(${offset * 5}deg)`,
+                  'z-index': String(i()),
+                }}
+              >
+                <Card faceDown glow={props.active} />
+              </div>
+            );
+          }}
         </For>
       </div>
     </div>
