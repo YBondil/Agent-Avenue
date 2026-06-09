@@ -9,9 +9,6 @@ interface PlayerHandProps {
   onSelectFaceUp: (card: AgentType) => void;
   onSelectFaceDown: (card: AgentType) => void;
   selectionMode: 'none' | 'picking';
-  discardCandidate: AgentType | null;
-  onSelectDiscard: (card: AgentType) => void;
-  discardMode: boolean;
 }
 
 // The active player's hand: four big, tappable agent cards (bottom zone).
@@ -19,9 +16,6 @@ const PlayerHand: Component<PlayerHandProps> = (props) => {
   function cardClass(card: AgentType): string {
     const base =
       'agent-card flex flex-col items-center justify-center gap-1 pt-3 pb-2 px-1 min-h-[84px]';
-    if (props.discardMode) {
-      return props.discardCandidate === card ? `${base} selected` : base;
-    }
     if (props.selectionMode === 'picking') {
       if (props.selectedFaceUp === card) return `${base} face-up-selected`;
       if (props.selectedFaceDown === card) return `${base} face-down-selected`;
@@ -31,10 +25,6 @@ const PlayerHand: Component<PlayerHandProps> = (props) => {
   }
 
   function handleClick(card: AgentType) {
-    if (props.discardMode) {
-      props.onSelectDiscard(card);
-      return;
-    }
     if (props.selectionMode !== 'picking') return;
 
     // First click fills face-up, next fills face-down; clicking a filled slot clears it.
@@ -53,7 +43,7 @@ const PlayerHand: Component<PlayerHandProps> = (props) => {
     }
   }
 
-  const interactive = () => props.selectionMode === 'picking' || props.discardMode;
+  const interactive = () => props.selectionMode === 'picking';
 
   return (
     <div>
@@ -61,13 +51,8 @@ const PlayerHand: Component<PlayerHandProps> = (props) => {
         <span class="text-[11px] font-bold uppercase tracking-wider text-spy-muted">
           Votre main
         </span>
-        <Show when={props.selectionMode === 'picking' && !props.discardMode}>
-          <span class="text-[11px] text-spy-muted">
-            1 visible, 1 cachee
-          </span>
-        </Show>
-        <Show when={props.discardMode}>
-          <span class="text-[11px] font-bold text-spy-warn">Carte a defausser</span>
+        <Show when={props.selectionMode === 'picking'}>
+          <span class="text-[11px] text-spy-muted">1 visible, 1 cachee</span>
         </Show>
       </div>
       <div class="grid grid-cols-4 gap-2">
@@ -83,16 +68,13 @@ const PlayerHand: Component<PlayerHandProps> = (props) => {
               <span class="text-[13px] font-extrabold leading-tight text-spy-text">
                 {AGENT_LABELS[card]}
               </span>
-              <Show when={props.selectionMode === 'picking' && !props.discardMode}>
+              <Show when={props.selectionMode === 'picking'}>
                 <Show when={props.selectedFaceUp === card}>
                   <span class="text-[10px] font-bold text-spy-success">Visible</span>
                 </Show>
                 <Show when={props.selectedFaceDown === card}>
                   <span class="text-[10px] font-bold text-spy-warn">Cachee</span>
                 </Show>
-              </Show>
-              <Show when={props.discardMode && props.discardCandidate === card}>
-                <span class="text-[10px] font-bold text-spy-accent">Defausser</span>
               </Show>
             </button>
           )}
