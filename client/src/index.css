@@ -12,14 +12,16 @@
   body {
     @apply text-spy-text;
     margin: 0;
-    font-family: 'Nunito', 'Baloo 2', system-ui, -apple-system, sans-serif;
-    /* Soft jovial gradient backdrop evoking a board-game table. */
-    background: radial-gradient(circle at 15% 0%, #ffe9c7 0%, transparent 45%),
-      radial-gradient(circle at 90% 10%, #ffd6e7 0%, transparent 40%),
-      radial-gradient(circle at 50% 100%, #d8f3ff 0%, transparent 45%),
-      #fdf2e3;
-    background-attachment: fixed;
+    font-family: 'Rajdhani', 'Orbitron', system-ui, -apple-system, sans-serif;
+    color-scheme: dark;
     -webkit-tap-highlight-color: transparent;
+    /* Holographic arena: deep glows over a near-black field. */
+    background:
+      radial-gradient(circle at 50% 18%, rgba(34, 211, 238, 0.16) 0%, transparent 45%),
+      radial-gradient(circle at 50% 92%, rgba(232, 121, 249, 0.14) 0%, transparent 45%),
+      radial-gradient(circle at 50% 55%, rgba(56, 189, 248, 0.06) 0%, transparent 60%),
+      #05060d;
+    background-attachment: fixed;
   }
 
   * {
@@ -28,129 +30,153 @@
 }
 
 @layer components {
-  .panel {
-    @apply bg-spy-surface/90 backdrop-blur rounded-3xl border-2 border-spy-border shadow-card;
+  /* ---- TCG card: strict 2.5 x 3.5 ratio (5:7), neon body, future <img> art ---- */
+  .tcg-card {
+    @apply relative rounded-xl select-none;
+    aspect-ratio: 5 / 7;
   }
 
-  .card-back {
-    @apply rounded-2xl border-2 border-spy-border flex items-center justify-center
-      text-spy-muted font-extrabold select-none;
-    background: repeating-linear-gradient(
-        45deg,
-        #efe6ff,
-        #efe6ff 8px,
-        #e7dcff 8px,
-        #e7dcff 16px
-      );
+  .flip {
+    perspective: 1200px;
   }
 
-  /* Playable agent card: big tap target, springy hover and selection. */
-  .agent-card {
-    @apply relative bg-spy-surface border-2 border-spy-border rounded-2xl
-      cursor-pointer select-none shadow-card overflow-hidden;
-    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
-      box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+  .flip__inner {
+    @apply relative w-full h-full rounded-xl;
+    transition: transform 0.55s cubic-bezier(0.4, 0.18, 0.2, 1);
+    transform-style: preserve-3d;
   }
 
-  .agent-card:hover {
-    @apply -translate-y-1 shadow-playful border-spy-accent;
+  .flip.is-down .flip__inner {
+    transform: rotateY(180deg);
   }
 
-  .agent-card:active {
-    @apply translate-y-0 scale-95;
+  .flip__face {
+    @apply absolute inset-0 rounded-xl overflow-hidden;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
   }
 
-  .agent-card.selected {
-    @apply border-spy-accent bg-spy-accent/10 -translate-y-1 shadow-playful;
+  .flip__back {
+    transform: rotateY(180deg);
   }
 
-  .agent-card.face-up-selected {
-    @apply border-spy-success bg-spy-success/15 -translate-y-1 shadow-playful;
+  /* Card front: agent art layer + holographic sheen + label. */
+  .tcg-front {
+    background: linear-gradient(160deg, #16224a 0%, #0a1024 100%);
+    box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.06);
   }
 
-  .agent-card.face-down-selected {
-    @apply border-spy-warn bg-spy-warn/15 -translate-y-1 shadow-playful;
+  .tcg-front img {
+    @apply absolute inset-0 w-full h-full object-cover opacity-90;
   }
 
-  .btn {
-    @apply px-5 py-3 rounded-2xl font-extrabold tracking-wide
+  .tcg-front::after {
+    content: '';
+    @apply absolute inset-0 pointer-events-none;
+    background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.12) 50%, transparent 70%);
+    mix-blend-mode: screen;
+  }
+
+  /* Custom card back: holographic emblem pattern. */
+  .tcg-back {
+    background:
+      radial-gradient(circle at 50% 38%, rgba(34, 211, 238, 0.35) 0%, transparent 55%),
+      repeating-linear-gradient(45deg, #0d1430 0 9px, #111a3c 9px 18px);
+    box-shadow: inset 0 0 0 2px rgba(34, 211, 238, 0.35);
+  }
+
+  .tcg-back::before {
+    content: '';
+    position: absolute;
+    inset: 18%;
+    border-radius: 9999px;
+    border: 2px solid rgba(34, 211, 238, 0.55);
+    box-shadow: 0 0 14px rgba(34, 211, 238, 0.5);
+  }
+
+  /* Floating action token / subtle plate (replaces classic buttons). */
+  .token {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full
+      font-bold uppercase tracking-[0.2em] text-sm cursor-pointer
       transition-all duration-150 active:scale-95
-      disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100;
+      disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100;
+    backdrop-filter: blur(6px);
   }
 
-  .btn-primary {
-    @apply btn bg-spy-accent text-white shadow-playful hover:brightness-110;
+  .token-cyan {
+    @apply token text-spy-accent;
+    background: rgba(34, 211, 238, 0.08);
+    box-shadow: 0 0 18px -2px rgba(34, 211, 238, 0.6), inset 0 0 0 1.5px rgba(34, 211, 238, 0.6);
   }
 
-  .btn-secondary {
-    @apply btn bg-spy-surface text-spy-text border-2 border-spy-border hover:border-spy-accent;
+  .token-ghost {
+    @apply token text-spy-muted;
+    box-shadow: inset 0 0 0 1.5px rgba(124, 138, 176, 0.4);
   }
 
-  .btn-danger {
-    @apply btn bg-spy-danger text-white shadow-playful hover:brightness-110;
-  }
-
-  .btn-success {
-    @apply btn bg-spy-success text-white shadow-playful hover:brightness-110;
-  }
-
-  /* Colored accent stripe atop a card / chip. */
-  .agent-stripe {
-    @apply absolute top-0 left-0 right-0 h-1.5;
+  .token-magenta {
+    @apply token text-spy-accent2;
+    background: rgba(232, 121, 249, 0.08);
+    box-shadow: 0 0 18px -2px rgba(232, 121, 249, 0.6), inset 0 0 0 1.5px rgba(232, 121, 249, 0.6);
   }
 }
 
 @layer utilities {
-  /* Smooth, slightly springy pawn travel on the board. */
+  .neon-text {
+    text-shadow: 0 0 8px currentColor, 0 0 18px currentColor;
+  }
+
+  /* Orthogonal pawn travel: move along X then Y (staggered) so the path hugs
+     the rectangular track instead of cutting diagonally. */
   .pawn-move {
-    transition: transform 0.6s cubic-bezier(0.34, 1.3, 0.5, 1);
+    transition: left 0.42s cubic-bezier(0.4, 0, 0.2, 1),
+      top 0.42s cubic-bezier(0.4, 0, 0.2, 1) 0.42s;
   }
 
-  /* Entrance for freshly recruited cards in the play zone. */
+  /* Reveal / placement of a recruited card. */
   .animate-card-enter {
-    animation: card-enter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation: card-reveal 0.5s cubic-bezier(0.3, 0.7, 0.2, 1) both;
   }
 
-  .animate-pop {
-    animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  .animate-dilemma-in {
+    animation: dilemma-in 0.45s cubic-bezier(0.34, 1.4, 0.5, 1) both;
   }
 
-  .animate-pulse-dot {
-    animation: pulse-dot 1.4s ease-in-out infinite;
+  .animate-pulse-ring {
+    animation: pulse-ring 1.6s ease-in-out infinite;
   }
 }
 
-@keyframes card-enter {
+@keyframes card-reveal {
   0% {
     opacity: 0;
-    transform: translateY(10px) scale(0.7) rotate(-6deg);
+    transform: rotateY(90deg) scale(0.8);
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1) rotate(0);
+    transform: rotateY(0) scale(1);
   }
 }
 
-@keyframes pop {
+@keyframes dilemma-in {
   0% {
-    transform: scale(0.85);
-  }
-  60% {
-    transform: scale(1.06);
+    opacity: 0;
+    transform: translateY(20px) scale(0.6);
   }
   100% {
-    transform: scale(1);
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
-@keyframes pulse-dot {
+@keyframes pulse-ring {
   0%,
   100% {
+    opacity: 0.45;
     transform: scale(1);
-    opacity: 1;
   }
   50% {
-    transform: scale(1.5);
-    opacity: 0.5;
+    opacity: 1;
+    transform: scale(1.08);
   }
 }
