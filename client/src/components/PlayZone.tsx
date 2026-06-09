@@ -27,7 +27,7 @@ const Row: Component<{ cards: AgentType[]; side: 'top' | 'bottom'; label: string
       </span>
       <For each={groups()}>
         {(g, i) => (
-          <div class="w-[7vh] max-w-[44px]" style={{ transform: `rotate(${tilt(i())}deg)` }}>
+          <div class="w-[8.5vh] max-w-[56px]" style={{ transform: `rotate(${tilt(i())}deg)` }}>
             <Card type={g.card} count={g.count} enter />
           </div>
         )}
