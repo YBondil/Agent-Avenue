@@ -13,7 +13,6 @@ export type PlayerView = {
   deckCount: number;
   inPlay: { p1: AgentType[]; p2: AgentType[] }; // recruited cards, public
   positions: { p1: number; p2: number };        // 0..13 on a 14-cell ring
-  discardsUsed: { p1: number; p2: number };
   activePlayer: PlayerId;
   phase: Phase;
   proposed: { faceUp: AgentType; faceDown: AgentType | null } | null; // faceDown null = hidden from you
