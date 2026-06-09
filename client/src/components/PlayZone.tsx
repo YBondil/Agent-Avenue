@@ -1,52 +1,43 @@
-import { Component, For, createMemo } from 'solid-js';
-import type { AgentType, PlayerId, PlayerView } from '../types';
+import { Component, For, Show, createMemo } from 'solid-js';
+import type { AgentType } from '../types';
 import Card from './Card';
 
 interface PlayZoneProps {
-  view: PlayerView;
+  cards: AgentType[];
+  label: string;
+  mine: boolean;
 }
 
-function groupCards(cards: AgentType[]): { card: AgentType; count: number }[] {
-  const map = new Map<AgentType, number>();
-  for (const c of cards) map.set(c, (map.get(c) ?? 0) + 1);
-  return [...map.entries()].map(([card, count]) => ({ card, count }));
+function group(cards: AgentType[]): { card: AgentType; count: number }[] {
+  const m = new Map<AgentType, number>();
+  for (const c of cards) m.set(c, (m.get(c) ?? 0) + 1);
+  return [...m.entries()].map(([card, count]) => ({ card, count }));
 }
 
-// Deterministic small tilt for an asymmetric, hand-placed feel.
-const tilt = (i: number) => ((i * 37) % 5) - 2;
-
-const Row: Component<{ cards: AgentType[]; side: 'top' | 'bottom'; label: string }> = (props) => {
-  const groups = createMemo(() => groupCards(props.cards));
-  return (
-    <div
-      class="absolute left-1/2 -translate-x-1/2 flex items-center gap-2"
-      style={{ [props.side]: '13%' }}
-    >
-      <span class="text-[10px] font-bold uppercase tracking-wider text-spy-muted">
-        {props.label}
-      </span>
-      <For each={groups()}>
-        {(g, i) => (
-          <div class="w-[8.5vh] max-w-[56px]" style={{ transform: `rotate(${tilt(i())}deg)` }}>
-            <Card type={g.card} count={g.count} enter />
-          </div>
-        )}
-      </For>
-    </div>
-  );
-};
-
-// Recruited cards: opponent's along the top of the arena, yours along the bottom.
+// A thin horizontal strip of recruited cards (grouped by type), placed next to
+// the owner's hand and clear of the board. Centers when it fits, scrolls
+// horizontally otherwise, so it never spills off-screen.
 const PlayZone: Component<PlayZoneProps> = (props) => {
-  const you = () => props.view.you;
-  const opp = (): PlayerId => (you() === 'p1' ? 'p2' : 'p1');
-  const mySide = you() ?? 'p1';
-  const oppSide = you() ? opp() : 'p2';
-
+  const groups = createMemo(() => group(props.cards));
   return (
-    <div class="absolute inset-0 pointer-events-none">
-      <Row cards={props.view.inPlay[oppSide]} side="top" label="Adversaire" />
-      <Row cards={props.view.inPlay[mySide]} side="bottom" label="Vous" />
+    <div class="overflow-x-auto overflow-y-visible">
+      <div class="flex items-center gap-1.5 w-max mx-auto px-2 py-2 min-h-[44px]">
+        <span class="shrink-0 text-[9px] font-bold uppercase tracking-wider text-spy-muted">
+          {props.label}
+        </span>
+        <Show
+          when={groups().length > 0}
+          fallback={<span class="text-[10px] text-spy-muted/70 italic">vide</span>}
+        >
+          <For each={groups()}>
+            {(g) => (
+              <div class="shrink-0 w-[clamp(34px,5.2dvh,48px)]">
+                <Card type={g.card} count={g.count} enter />
+              </div>
+            )}
+          </For>
+        </Show>
+      </div>
     </div>
   );
 };
