@@ -6,7 +6,6 @@ export type ServerMessage =
 
 export type ClientMessage =
   | { type: 'start' }
-  | { type: 'discard'; card: import('./types').AgentType }
   | { type: 'play'; faceUp: import('./types').AgentType; faceDown: import('./types').AgentType }
   | { type: 'recruit'; choice: 'faceUp' | 'faceDown' }
   | { type: 'reset' };
