@@ -12,35 +12,31 @@ function groupCards(cards: AgentType[]): { card: AgentType; count: number }[] {
   return [...map.entries()].map(([card, count]) => ({ card, count }));
 }
 
-// Deterministic small rotation for a hand-placed feel.
+// Deterministic small tilt for an asymmetric, hand-placed feel.
 const tilt = (i: number) => ((i * 37) % 5) - 2;
 
-const Cluster: Component<{ cards: AgentType[]; side: 'left' | 'right'; label: string }> = (
-  props
-) => {
+const Row: Component<{ cards: AgentType[]; side: 'top' | 'bottom'; label: string }> = (props) => {
   const groups = createMemo(() => groupCards(props.cards));
   return (
     <div
-      class="absolute top-1/2 -translate-y-1/2 w-[26%] max-w-[140px] flex flex-col items-center gap-1.5"
-      style={{ [props.side]: '2%' }}
+      class="absolute left-1/2 -translate-x-1/2 flex items-center gap-2"
+      style={{ [props.side]: '13%' }}
     >
       <span class="text-[10px] font-bold uppercase tracking-wider text-spy-muted">
         {props.label}
       </span>
-      <div class="flex flex-wrap justify-center gap-x-2 gap-y-3">
-        <For each={groups()}>
-          {(g, i) => (
-            <div class="w-[8vh] max-w-[52px]" style={{ transform: `rotate(${tilt(i())}deg)` }}>
-              <Card type={g.card} count={g.count} enter />
-            </div>
-          )}
-        </For>
-      </div>
+      <For each={groups()}>
+        {(g, i) => (
+          <div class="w-[7vh] max-w-[44px]" style={{ transform: `rotate(${tilt(i())}deg)` }}>
+            <Card type={g.card} count={g.count} enter />
+          </div>
+        )}
+      </For>
     </div>
   );
 };
 
-// Recruited cards on either side of the arena interior.
+// Recruited cards: opponent's along the top of the arena, yours along the bottom.
 const PlayZone: Component<PlayZoneProps> = (props) => {
   const you = () => props.view.you;
   const opp = (): PlayerId => (you() === 'p1' ? 'p2' : 'p1');
@@ -49,8 +45,8 @@ const PlayZone: Component<PlayZoneProps> = (props) => {
 
   return (
     <div class="absolute inset-0 pointer-events-none">
-      <Cluster cards={props.view.inPlay[oppSide]} side="left" label="Adversaire" />
-      <Cluster cards={props.view.inPlay[mySide]} side="right" label="Vous" />
+      <Row cards={props.view.inPlay[oppSide]} side="top" label="Adversaire" />
+      <Row cards={props.view.inPlay[mySide]} side="bottom" label="Vous" />
     </div>
   );
 };
