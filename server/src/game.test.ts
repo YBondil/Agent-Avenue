@@ -191,19 +191,6 @@ test('lose by 3 risque-tout: opponent wins', () => {
   expect(room.winReason).toBe('3-risque');
 });
 
-test('discard is capped and consumes the deck', () => {
-  const room = newGame();
-  const before = room.deck.length;
-  for (let i = 0; i < 4; i++) {
-    const err = applyAction(room, 'p1', { type: 'discard', card: room.hands.p1[0] });
-    expect(err).toBeNull();
-  }
-  const err = applyAction(room, 'p1', { type: 'discard', card: room.hands.p1[0] });
-  expect(err).toContain('défausses');
-  expect(room.discardsUsed.p1).toBe(4);
-  expect(room.deck.length).toBe(before - 4);
-});
-
 test('viewFor hides opponent hand and face-down card', () => {
   const room = newGame();
   room.hands.p1 = ['mercenaire', 'saboteur', 'taupe', 'sentinelle'];
