@@ -10,6 +10,7 @@ import OpponentHand from './components/OpponentHand';
 import PlayZone from './components/PlayZone';
 import ActionPanel from './components/ActionPanel';
 import DilemmaArena from './components/DilemmaArena';
+import Deck from './components/Deck';
 import Toast from './components/Toast';
 import WinBanner from './components/WinBanner';
 
@@ -157,19 +158,20 @@ const App: Component = () => {
         />
       </Show>
 
-      {/* Holographic duel arena: Opponent (top) / Arena (center) / Player (bottom) */}
+      {/* Casino table: Opponent (top) / Plateau (center) / Player (bottom).
+          Grid rows keep all three visible on one screen without scrolling. */}
       <Show when={phase() !== 'lobby' && roomCode() !== null && currentView() !== null}>
-        <div class="h-screen flex flex-col overflow-hidden mx-auto max-w-3xl">
-          {/* TOP ZONE: opponent's dealt backs */}
-          <header class="shrink-0 pt-2">
-            <OpponentHand
-              count={currentView()!.oppHandCount}
-              active={!myTurn() && phase() !== 'ended'}
-            />
+        <div
+          class="grid mx-auto max-w-3xl overflow-hidden"
+          style={{ height: '100dvh', 'grid-template-rows': 'auto minmax(0,1fr) auto' }}
+        >
+          {/* TOP ZONE: opponent's card backs */}
+          <header class="pt-2 pb-1">
+            <OpponentHand count={currentView()!.oppHandCount} />
           </header>
 
-          {/* CENTER ZONE: the arena. Board, play zones, dilemma and result overlay. */}
-          <main class="relative flex-1 min-h-0">
+          {/* CENTER ZONE: the plateau. Board, play zones, dilemma, result. */}
+          <main class="relative">
             <Board view={currentView()!} />
             <PlayZone view={currentView()!} />
 
@@ -191,7 +193,7 @@ const App: Component = () => {
           </main>
 
           {/* BOTTOM ZONE: action tokens + the player's fanned hand */}
-          <footer class="shrink-0 pb-3 flex flex-col gap-1">
+          <footer class="pb-[max(0.75rem,env(safe-area-inset-bottom))] flex flex-col gap-1">
             <ActionPanel
               view={currentView()!}
               selectedFaceUp={selectedFaceUp()}
@@ -208,6 +210,9 @@ const App: Component = () => {
               selectionMode={phase() === 'play' && myTurn() ? 'picking' : 'none'}
             />
           </footer>
+
+          {/* Deck pile + 3D draw animation overlay (local and opponent draws) */}
+          <Deck view={currentView()!} />
         </div>
       </Show>
     </>
