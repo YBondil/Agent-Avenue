@@ -148,9 +148,14 @@ function catchOf(
   return p === active ? activeCatches : oppCatches;
 }
 
-// Evaluate win conditions in order A (catch) > B (3 cryptologues) > C (3
-// risque-tout = that player loses). When conditions point to different winners,
-// the active player wins the tie.
+// Étape 3 "Terminer le tour": check ALL end conditions at once (rulebook p.7-8).
+//   A. A pawn caught/passed the other -> that player wins.
+//   B. A player has 3 Cryptologues in play -> that player wins.
+//   C. A player has 3 Risque-tout in play -> that player loses (opponent wins).
+// Every satisfied condition is recorded as a "claim" for a winner. A single
+// distinct winner takes the game. If the claims name different winners it is an
+// égalité and the ACTIVE player wins (rulebook p.8: both win-conditions, both
+// lose-conditions, or one player meeting a win AND a lose condition).
 function resolveEndOfTurn(state: RoomState, caught: { p1: boolean; p2: boolean }) {
   const claims: { winner: PlayerId; reason: RoomState['winReason'] }[] = [];
 
@@ -174,19 +179,24 @@ function resolveEndOfTurn(state: RoomState, caught: { p1: boolean; p2: boolean }
       const c = claims[0];
       finish(state, c.winner, c.reason);
     } else {
-      // Tie between different winners -> active player wins.
+      // Égalité: the active player wins, keeping their own claim reason if any.
       const own = claims.find((c) => c.winner === state.activePlayer);
       finish(state, state.activePlayer, own ? own.reason : 'catch');
     }
     return;
   }
 
-  // No win: hand off to the opponent. If they cannot play, end by proximity.
-  state.activePlayer = other(state.activePlayer);
-  state.phase = 'play';
-  if (state.hands[state.activePlayer].length < 2) {
-    endByProximity(state);
+  // No end condition met. "Main vide" check happens at the end of the current
+  // player's turn (rulebook p.8): if the deck is empty and the opponent can no
+  // longer field 2 cards, the game ends now. Closest to catching wins; on equal
+  // distance the active player (the one whose turn it just was) wins.
+  const next = other(state.activePlayer);
+  if (state.deck.length === 0 && state.hands[next].length < 2) {
+    endByProximity(state, state.activePlayer);
+    return;
   }
+  state.activePlayer = next;
+  state.phase = 'play';
 }
 
 function finish(state: RoomState, winner: PlayerId, reason: RoomState['winReason']) {
@@ -196,14 +206,15 @@ function finish(state: RoomState, winner: PlayerId, reason: RoomState['winReason
 }
 
 // Empty-deck endgame: the player closest to catching the other (smallest
-// clockwise gap to the opponent) wins; ties go to the active player.
-function endByProximity(state: RoomState) {
+// clockwise gap to the opponent) wins. On equal distance, the player who just
+// took the turn (`tieWinner`) wins.
+function endByProximity(state: RoomState, tieWinner: PlayerId) {
   const gapP1 = clockwiseGap(state.positions.p1, state.positions.p2);
   const gapP2 = clockwiseGap(state.positions.p2, state.positions.p1);
   let winner: PlayerId;
   if (gapP1 < gapP2) winner = 'p1';
   else if (gapP2 < gapP1) winner = 'p2';
-  else winner = state.activePlayer;
+  else winner = tieWinner;
   finish(state, winner, 'hand-empty');
 }
 
