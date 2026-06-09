@@ -1,6 +1,6 @@
-import { Component, For, Show } from 'solid-js';
+import { Component, For, Show, createSignal } from 'solid-js';
 import type { AgentType } from '../types';
-import { AGENT_COLORS, AGENT_LABELS } from '../constants';
+import Card from './Card';
 
 interface PlayerHandProps {
   hand: AgentType[];
@@ -11,73 +11,74 @@ interface PlayerHandProps {
   selectionMode: 'none' | 'picking';
 }
 
-// The active player's hand: four big, tappable agent cards (bottom zone).
+// The active player's hand, fanned in an arc and anchored to the bottom edge.
+// Cards lift, scale and rise above their neighbours on hover.
 const PlayerHand: Component<PlayerHandProps> = (props) => {
-  function cardClass(card: AgentType): string {
-    const base =
-      'agent-card flex flex-col items-center justify-center gap-1 pt-3 pb-2 px-1 min-h-[84px]';
-    if (props.selectionMode === 'picking') {
-      if (props.selectedFaceUp === card) return `${base} face-up-selected`;
-      if (props.selectedFaceDown === card) return `${base} face-down-selected`;
-      return base;
-    }
-    return `${base} cursor-default`;
-  }
+  const [hovered, setHovered] = createSignal<number | null>(null);
+
+  const slot = (card: AgentType): 'up' | 'down' | null =>
+    props.selectedFaceUp === card ? 'up' : props.selectedFaceDown === card ? 'down' : null;
 
   function handleClick(card: AgentType) {
     if (props.selectionMode !== 'picking') return;
-
-    // First click fills face-up, next fills face-down; clicking a filled slot clears it.
-    if (props.selectedFaceUp === card) {
-      props.onSelectFaceUp(card);
-      return;
-    }
-    if (props.selectedFaceDown === card) {
-      props.onSelectFaceDown(card);
-      return;
-    }
-    if (props.selectedFaceUp === null) {
-      props.onSelectFaceUp(card);
-    } else {
-      props.onSelectFaceDown(card);
-    }
+    if (props.selectedFaceUp === card) return props.onSelectFaceUp(card);
+    if (props.selectedFaceDown === card) return props.onSelectFaceDown(card);
+    if (props.selectedFaceUp === null) props.onSelectFaceUp(card);
+    else props.onSelectFaceDown(card);
   }
 
   const interactive = () => props.selectionMode === 'picking';
 
   return (
-    <div>
-      <div class="flex items-center justify-between mb-1.5">
-        <span class="text-[11px] font-bold uppercase tracking-wider text-spy-muted">
-          Votre main
-        </span>
-        <Show when={props.selectionMode === 'picking'}>
-          <span class="text-[11px] text-spy-muted">1 visible, 1 cachee</span>
-        </Show>
-      </div>
-      <div class="grid grid-cols-4 gap-2">
+    <div class="flex justify-center items-end h-28">
+      <div class="flex items-end">
         <For each={props.hand}>
-          {(card) => (
-            <button
-              class={cardClass(card)}
-              onClick={() => handleClick(card)}
-              disabled={!interactive()}
-              type="button"
-            >
-              <span class="agent-stripe" style={{ background: AGENT_COLORS[card] }} />
-              <span class="text-[13px] font-extrabold leading-tight text-spy-text">
-                {AGENT_LABELS[card]}
-              </span>
-              <Show when={props.selectionMode === 'picking'}>
-                <Show when={props.selectedFaceUp === card}>
-                  <span class="text-[10px] font-bold text-spy-success">Visible</span>
-                </Show>
-                <Show when={props.selectedFaceDown === card}>
-                  <span class="text-[10px] font-bold text-spy-warn">Cachee</span>
-                </Show>
-              </Show>
-            </button>
-          )}
+          {(card, i) => {
+            const n = props.hand.length;
+            const mid = () => (n - 1) / 2;
+            const offset = () => i() - mid();
+            const isHover = () => hovered() === i();
+            const sel = () => slot(card);
+            const ring = () =>
+              sel() === 'up'
+                ? '0 0 26px 2px rgba(52,211,153,0.9)'
+                : sel() === 'down'
+                ? '0 0 26px 2px rgba(251,191,36,0.9)'
+                : undefined;
+            return (
+              <div
+                class="relative"
+                style={{
+                  'z-index': isHover() ? '100' : sel() ? '60' : String(10 + i()),
+                  transform: `rotate(${offset() * 6}deg) translateY(${Math.abs(offset()) * 7}px)`,
+                  margin: '0 -12px',
+                }}
+              >
+                <button
+                  type="button"
+                  disabled={!interactive()}
+                  onMouseEnter={() => setHovered(i())}
+                  onMouseLeave={() => setHovered((h) => (h === i() ? null : h))}
+                  onClick={() => handleClick(card)}
+                  class={`block w-16 origin-bottom transition-transform duration-200 ${
+                    interactive() ? 'hover:-translate-y-7 hover:scale-110' : ''
+                  } ${sel() ? '-translate-y-5' : ''}`}
+                  style={{ 'border-radius': '0.75rem', 'box-shadow': ring() }}
+                >
+                  <Show when={sel()}>
+                    <span
+                      class={`absolute top-1 left-1/2 -translate-x-1/2 z-10 px-1.5 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-wider text-black ${
+                        sel() === 'up' ? 'bg-spy-success' : 'bg-spy-warn'
+                      }`}
+                    >
+                      {sel() === 'up' ? 'Visible' : 'Cachee'}
+                    </span>
+                  </Show>
+                  <Card type={card} glow={sel() !== null} />
+                </button>
+              </div>
+            );
+          }}
         </For>
       </div>
     </div>
