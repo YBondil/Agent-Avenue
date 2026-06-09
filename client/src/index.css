@@ -12,15 +12,14 @@
   body {
     @apply text-spy-text;
     margin: 0;
-    font-family: 'Rajdhani', 'Orbitron', system-ui, -apple-system, sans-serif;
-    color-scheme: dark;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-tap-highlight-color: transparent;
-    /* Holographic arena: deep glows over a near-black field. */
-    background:
-      radial-gradient(circle at 50% 18%, rgba(34, 211, 238, 0.16) 0%, transparent 45%),
-      radial-gradient(circle at 50% 92%, rgba(232, 121, 249, 0.14) 0%, transparent 45%),
-      radial-gradient(circle at 50% 55%, rgba(56, 189, 248, 0.06) 0%, transparent 60%),
-      #05060d;
+    /* Casino felt: green base, soft center light, darker vignette, fine noise. */
+    background-color: #0b3d27;
+    background-image:
+      radial-gradient(ellipse 90% 70% at 50% 42%, rgba(46, 139, 87, 0.35) 0%, transparent 60%),
+      radial-gradient(ellipse 120% 100% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.55) 100%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
     background-attachment: fixed;
   }
 
@@ -30,153 +29,118 @@
 }
 
 @layer components {
-  /* ---- TCG card: strict 2.5 x 3.5 ratio (5:7), neon body, future <img> art ---- */
-  .tcg-card {
-    @apply relative rounded-xl select-none;
+  /* ---- Physical playing card: ivory stock, 2.5x3.5 ratio, real shadow ---- */
+  .play-card {
+    @apply relative rounded-lg bg-spy-card shadow-card select-none overflow-hidden;
     aspect-ratio: 5 / 7;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    box-shadow:
+      0 6px 14px -4px rgba(0, 0, 0, 0.55),
+      0 2px 4px rgba(0, 0, 0, 0.4),
+      inset 0 0 0 2px rgba(255, 255, 255, 0.55),
+      inset 0 0 0 3px rgba(0, 0, 0, 0.06);
   }
 
-  .flip {
-    perspective: 1200px;
+  /* Card back: woven casino pattern with a framed border. */
+  .card-back {
+    @apply relative rounded-lg shadow-card select-none overflow-hidden;
+    aspect-ratio: 5 / 7;
+    background-color: #7d1d1d;
+    background-image:
+      repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.06) 0 6px, transparent 6px 12px),
+      repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.18) 0 6px, transparent 6px 12px),
+      radial-gradient(circle at 50% 50%, #9a2a2a 0%, #631515 100%);
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    box-shadow:
+      0 6px 14px -4px rgba(0, 0, 0, 0.55),
+      inset 0 0 0 3px rgba(202, 161, 90, 0.7),
+      inset 0 0 0 5px rgba(0, 0, 0, 0.3);
   }
 
-  .flip__inner {
-    @apply relative w-full h-full rounded-xl;
-    transition: transform 0.55s cubic-bezier(0.4, 0.18, 0.2, 1);
-    transform-style: preserve-3d;
-  }
-
-  .flip.is-down .flip__inner {
-    transform: rotateY(180deg);
-  }
-
-  .flip__face {
-    @apply absolute inset-0 rounded-xl overflow-hidden;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-  }
-
-  .flip__back {
-    transform: rotateY(180deg);
-  }
-
-  /* Card front: agent art layer + holographic sheen + label. */
-  .tcg-front {
-    background: linear-gradient(160deg, #16224a 0%, #0a1024 100%);
-    box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.06);
-  }
-
-  .tcg-front img {
-    @apply absolute inset-0 w-full h-full object-cover opacity-90;
-  }
-
-  .tcg-front::after {
-    content: '';
-    @apply absolute inset-0 pointer-events-none;
-    background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.12) 50%, transparent 70%);
-    mix-blend-mode: screen;
-  }
-
-  /* Custom card back: holographic emblem pattern. */
-  .tcg-back {
-    background:
-      radial-gradient(circle at 50% 38%, rgba(34, 211, 238, 0.35) 0%, transparent 55%),
-      repeating-linear-gradient(45deg, #0d1430 0 9px, #111a3c 9px 18px);
-    box-shadow: inset 0 0 0 2px rgba(34, 211, 238, 0.35);
-  }
-
-  .tcg-back::before {
+  .card-back::after {
     content: '';
     position: absolute;
     inset: 18%;
-    border-radius: 9999px;
-    border: 2px solid rgba(34, 211, 238, 0.55);
-    box-shadow: 0 0 14px rgba(34, 211, 238, 0.5);
+    border-radius: 6px;
+    border: 1.5px solid rgba(202, 161, 90, 0.55);
   }
 
-  /* Floating action token / subtle plate (replaces classic buttons). */
+  /* ---- Tactile token buttons ---- */
   .token {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full
-      font-bold uppercase tracking-[0.2em] text-sm cursor-pointer
-      transition-all duration-150 active:scale-95
-      disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100;
-    backdrop-filter: blur(6px);
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full
+      font-bold uppercase tracking-wider text-sm cursor-pointer shadow-token
+      transition-all duration-150 active:translate-y-px active:shadow-card
+      disabled:opacity-40 disabled:cursor-not-allowed;
   }
 
-  .token-cyan {
-    @apply token text-spy-accent;
-    background: rgba(34, 211, 238, 0.08);
-    box-shadow: 0 0 18px -2px rgba(34, 211, 238, 0.6), inset 0 0 0 1.5px rgba(34, 211, 238, 0.6);
+  .token-gold {
+    @apply token text-ink;
+    background: linear-gradient(180deg, #e7c878 0%, #caa15a 55%, #a9823f 100%);
+  }
+
+  .token-green {
+    @apply token text-white;
+    background: linear-gradient(180deg, #36a36a 0%, #2e8b57 55%, #226b43 100%);
   }
 
   .token-ghost {
-    @apply token text-spy-muted;
-    box-shadow: inset 0 0 0 1.5px rgba(124, 138, 176, 0.4);
-  }
-
-  .token-magenta {
-    @apply token text-spy-accent2;
-    background: rgba(232, 121, 249, 0.08);
-    box-shadow: 0 0 18px -2px rgba(232, 121, 249, 0.6), inset 0 0 0 1.5px rgba(232, 121, 249, 0.6);
+    @apply token text-spy-text;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.25);
   }
 }
 
 @layer utilities {
-  .neon-text {
-    text-shadow: 0 0 8px currentColor, 0 0 18px currentColor;
-  }
-
-  /* Orthogonal pawn travel: move along X then Y (staggered) so the path hugs
-     the rectangular track instead of cutting diagonally. */
+  /* Orthogonal pawn travel: move along X then Y so the path hugs the track. */
   .pawn-move {
-    transition: left 0.42s cubic-bezier(0.4, 0, 0.2, 1),
-      top 0.42s cubic-bezier(0.4, 0, 0.2, 1) 0.42s;
+    transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+      top 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.4s;
   }
 
-  /* Reveal / placement of a recruited card. */
-  .animate-card-enter {
-    animation: card-reveal 0.5s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+  /* Placement of a freshly recruited card. */
+  .animate-place {
+    animation: place 0.45s cubic-bezier(0.3, 0.7, 0.2, 1) both;
   }
 
-  .animate-dilemma-in {
-    animation: dilemma-in 0.45s cubic-bezier(0.34, 1.4, 0.5, 1) both;
-  }
-
-  .animate-pulse-ring {
-    animation: pulse-ring 1.6s ease-in-out infinite;
+  .animate-rise {
+    animation: rise 0.4s ease-out both;
   }
 }
 
-@keyframes card-reveal {
+/* Flying draw card: lifts off the deck, spins in 3D, lands in a hand.
+   The travel itself is driven by a left/top/transform transition set in JS. */
+.draw-flyer {
+  position: fixed;
+  width: 9vh;
+  max-width: 56px;
+  z-index: 60;
+  transition:
+    left 0.6s cubic-bezier(0.4, 0.1, 0.2, 1),
+    top 0.6s cubic-bezier(0.4, 0.1, 0.2, 1),
+    transform 0.6s cubic-bezier(0.4, 0.1, 0.2, 1),
+    opacity 0.6s ease;
+  transform-style: preserve-3d;
+  will-change: left, top, transform;
+}
+
+@keyframes place {
   0% {
     opacity: 0;
-    transform: rotateY(90deg) scale(0.8);
+    transform: translateY(8px) scale(0.85) rotateX(35deg);
   }
   100% {
     opacity: 1;
-    transform: rotateY(0) scale(1);
+    transform: translateY(0) scale(1) rotateX(0);
   }
 }
 
-@keyframes dilemma-in {
+@keyframes rise {
   0% {
     opacity: 0;
-    transform: translateY(20px) scale(0.6);
+    transform: translateY(14px);
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes pulse-ring {
-  0%,
-  100% {
-    opacity: 0.45;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.08);
+    transform: translateY(0);
   }
 }
