@@ -26,7 +26,6 @@ export type RoomState = {
   hands: { p1: AgentType[]; p2: AgentType[] };
   inPlay: { p1: AgentType[]; p2: AgentType[] };
   positions: { p1: number; p2: number }; // 0..13 on a 14-cell ring
-  discardsUsed: { p1: number; p2: number };
   activePlayer: PlayerId;
   phase: Phase;
   // Cards the active player committed in the play phase. The opponent picks one.
@@ -46,7 +45,6 @@ export type PlayerView = {
   deckCount: number;
   inPlay: { p1: AgentType[]; p2: AgentType[] }; // recruited cards are public
   positions: { p1: number; p2: number };
-  discardsUsed: { p1: number; p2: number };
   activePlayer: PlayerId;
   phase: Phase;
   // faceDown is null until you are allowed to see it (you played it, or it
@@ -59,7 +57,6 @@ export type PlayerView = {
 // Messages: client -> server
 export type ClientMessage =
   | { type: 'start' }
-  | { type: 'discard'; card: AgentType }
   | { type: 'play'; faceUp: AgentType; faceDown: AgentType }
   | { type: 'recruit'; choice: 'faceUp' | 'faceDown' }
   | { type: 'reset' };
