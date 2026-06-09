@@ -31,7 +31,7 @@ const PlayerHand: Component<PlayerHandProps> = (props) => {
   const spread = () => Math.min(9, 26 / Math.max(1, props.hand.length));
 
   return (
-    <div class="flex justify-center items-end h-[19dvh] min-h-[120px]">
+    <div class="flex justify-center items-end h-[21dvh] min-h-[136px]">
       <div class="flex items-end">
         <For each={props.hand}>
           {(card, i) => {
@@ -54,7 +54,7 @@ const PlayerHand: Component<PlayerHandProps> = (props) => {
                   onMouseEnter={() => setHovered(i())}
                   onMouseLeave={() => setHovered((h) => (h === i() ? null : h))}
                   onClick={() => handleClick(card)}
-                  class={`block w-[clamp(72px,13dvh,104px)] origin-bottom transition-transform duration-200 ${
+                  class={`block w-[clamp(86px,15dvh,124px)] origin-bottom transition-transform duration-200 ${
                     interactive() ? 'hover:-translate-y-7 hover:scale-110' : ''
                   } ${sel() ? '-translate-y-4' : ''}`}
                 >
