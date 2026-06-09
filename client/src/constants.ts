@@ -11,6 +11,19 @@ export const AGENT_LABELS: Record<AgentType, string> = {
   taupe: 'Taupe',
 };
 
+// Future card artwork. Files do not exist yet: the <img> tag falls back to the
+// styled placeholder via onerror. Drop art at these paths to light them up.
+export const AGENT_ART: Record<AgentType, string> = {
+  agentDouble: '/agents/agent-double.webp',
+  saboteur: '/agents/saboteur.webp',
+  mercenaire: '/agents/mercenaire.webp',
+  risqueTout: '/agents/risque-tout.webp',
+  cryptologue: '/agents/cryptologue.webp',
+  sentinelle: '/agents/sentinelle.webp',
+  acolyte: '/agents/acolyte.webp',
+  taupe: '/agents/taupe.webp',
+};
+
 // Distinct accent color per agent for a playful, easily-scanned look.
 export const AGENT_COLORS: Record<AgentType, string> = {
   agentDouble: '#6C5CE7', // indigo
