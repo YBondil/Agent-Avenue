@@ -24,7 +24,7 @@ export const WIN_REASON_LABELS: Record<string, string> = {
 export const BOARD_CELLS = 14;
 
 // --- Mode Avancé ---
-export const MARCHE_NOIR_CELLS = [3, 4, 10, 11];
+export const MARCHE_NOIR_CELLS = [2, 5, 9, 12];
 export const MAISON: Record<'p1' | 'p2', number> = { p1: 0, p2: 7 };
 
 // Image file slugs in /assets/cards/marcherNoir/<slug>.jpeg

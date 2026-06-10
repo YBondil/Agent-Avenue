@@ -6,7 +6,7 @@ export const HAND_SIZE = 4;
 
 // Mode Avancé board geometry: Maison (start) cells and the 4 Marché Noir corners.
 export const MAISON: Record<PlayerId, number> = { p1: 0, p2: 7 };
-export const MARCHE_NOIR_CELLS = [3, 4, 10, 11];
+export const MARCHE_NOIR_CELLS = [2, 5, 9, 12];
 export const isMarcheNoir = (cell: number) => MARCHE_NOIR_CELLS.includes(cell);
 export const isMaison = (cell: number) => cell === MAISON.p1 || cell === MAISON.p2;
 
