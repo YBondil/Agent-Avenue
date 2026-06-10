@@ -1,6 +1,6 @@
 import { Component, For, Show, createEffect, createMemo, createSignal, onCleanup } from 'solid-js';
 import type { PlayerId, PlayerView } from '../types';
-import { BOARD_CELLS } from '../constants';
+import { BOARD_CELLS, MARCHE_NOIR_CELLS } from '../constants';
 
 interface BoardProps {
   view: PlayerView;
@@ -158,7 +158,7 @@ const Board: Component<BoardProps> = (props) => {
         {/* Cell sockets. In advanced mode the 4 corners are Marché Noir cases. */}
         <For each={cells()}>
           {(cell) => {
-            const isMN = () => props.view.mode === 'advanced' && [3, 4, 10, 11].includes(cell.i);
+            const isMN = () => props.view.mode === 'advanced' && MARCHE_NOIR_CELLS.includes(cell.i);
             return (
               <g transform={`translate(${cell.x}, ${cell.y})`}>
                 <circle
