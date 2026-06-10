@@ -20,7 +20,7 @@ const S1 = (Math.PI * R) / 2; // upper-left quarter
 const S2 = LX; // top straight
 const S3 = Math.PI * R; // right semicircle
 const PERIM = 2 * LX + 2 * Math.PI * R;
-const STEP_MS = 150; // pause between single-cell hops
+const STEP_MS = 280; // pause between single-cell hops
 
 // Point at perimeter index (0..13), walking clockwise from the left apex.
 function cellPoint(index: number): { x: number; y: number } {

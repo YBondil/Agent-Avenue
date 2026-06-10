@@ -46,7 +46,7 @@
 
   .flip__inner {
     @apply relative w-full h-full;
-    transition: transform 0.55s cubic-bezier(0.4, 0.18, 0.2, 1);
+    transition: transform 0.8s cubic-bezier(0.4, 0.18, 0.2, 1);
     transform-style: preserve-3d;
   }
 
@@ -106,15 +106,15 @@
 @layer utilities {
   /* One quick hop per cell; the stepping cadence is driven from JS. */
   .pawn-move {
-    transition: transform 0.13s ease-in-out;
+    transition: transform 0.26s ease-in-out;
   }
 
   .animate-place {
-    animation: place 0.45s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+    animation: place 0.72s cubic-bezier(0.3, 0.7, 0.2, 1) both;
   }
 
   .animate-rise {
-    animation: rise 0.4s ease-out both;
+    animation: rise 0.62s ease-out both;
   }
 
   .neon-text {
@@ -124,7 +124,7 @@
 
 /* Recruit reveal: cards deal out from centre to each owner. */
 .reveal-card {
-  transition: transform 0.8s cubic-bezier(0.34, 0.9, 0.4, 1), opacity 0.8s ease;
+  transition: transform 1.2s cubic-bezier(0.34, 0.9, 0.4, 1), opacity 1.2s ease;
 }
 
 /* Flying draw card: lifts off the deck, tumbles in 3D, lands in a hand. */
@@ -134,10 +134,10 @@
   max-width: 64px;
   z-index: 60;
   transition:
-    left 0.6s cubic-bezier(0.4, 0.1, 0.2, 1),
-    top 0.6s cubic-bezier(0.4, 0.1, 0.2, 1),
-    transform 0.6s cubic-bezier(0.4, 0.1, 0.2, 1),
-    opacity 0.6s ease;
+    left 1s cubic-bezier(0.4, 0.1, 0.2, 1),
+    top 1s cubic-bezier(0.4, 0.1, 0.2, 1),
+    transform 1s cubic-bezier(0.4, 0.1, 0.2, 1),
+    opacity 1s ease;
   transform-style: preserve-3d;
   will-change: left, top, transform;
 }

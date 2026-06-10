@@ -32,8 +32,8 @@ const FlyingCard: Component<{ flyer: Flyer; onDone: (id: number) => void }> = (p
       el.style.top = t.y;
       el.style.transform =
         'translate(-50%,-50%) rotateZ(-12deg) rotateY(540deg) scale(0.82)';
-    }, props.flyer.delay + 20);
-    setTimeout(() => props.onDone(props.flyer.id), props.flyer.delay + 680);
+    }, props.flyer.delay + 30);
+    setTimeout(() => props.onDone(props.flyer.id), props.flyer.delay + 1130);
   });
 
   return (
@@ -53,7 +53,7 @@ const Deck: Component<DeckProps> = (props) => {
   function spawn(to: 'you' | 'opp', n: number) {
     const add: Flyer[] = [];
     for (let i = 0; i < Math.min(n, 4); i++) {
-      add.push({ id: nextId++, to, delay: i * 130 });
+      add.push({ id: nextId++, to, delay: i * 230 });
     }
     setFlyers((f) => [...f, ...add]);
   }

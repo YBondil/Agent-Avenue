@@ -24,7 +24,7 @@ const RecruitReveal: Component<RecruitRevealProps> = (props) => {
       up.style.opacity = '0';
       down.style.transform = 'translateY(42dvh) scale(0.55)';
       down.style.opacity = '0';
-    }, 260);
+    }, 450);
   });
 
   return (

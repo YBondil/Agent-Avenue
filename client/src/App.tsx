@@ -69,7 +69,7 @@ const App: Component = () => {
             const myCard = v.inPlay[me].at(-1);
             if (oppCard && myCard) {
               setReveal({ oppCard, myCard });
-              setTimeout(() => setReveal(null), 1150);
+              setTimeout(() => setReveal(null), 1750);
             }
           }
           setView(v);
