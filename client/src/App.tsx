@@ -12,7 +12,7 @@ import PlayZone from './components/PlayZone';
 import ActionPanel from './components/ActionPanel';
 import DilemmaArena from './components/DilemmaArena';
 import RecruitReveal from './components/RecruitReveal';
-import Market from './components/Market';
+import MarketViewer from './components/MarketViewer';
 import MarcheNoirOverlay from './components/MarcheNoirOverlay';
 import BMCard from './components/BMCard';
 import Deck from './components/Deck';
@@ -32,6 +32,7 @@ const App: Component = () => {
   const [toast, setToast] = createSignal<string | null>(null);
   const [isConnecting, setIsConnecting] = createSignal(false);
   const [tutorial, setTutorial] = createSignal<'base' | 'advanced' | null>(null);
+  const [showMarket, setShowMarket] = createSignal(false);
 
   // Hand selection state
   const [selectedFaceUp, setSelectedFaceUp] = createSignal<AgentType | null>(null);
@@ -218,7 +219,6 @@ const App: Component = () => {
             <OpponentHand count={currentView()!.oppHandCount} />
             <PlayZone cards={currentView()!.inPlay[oppId()]} label="Adversaire" mine={false} />
             {bmRow(currentView()!.blackMarket[oppId()])}
-            <Market view={currentView()!} />
           </header>
 
           {/* CENTER ZONE: the plateau, kept clear of the recruited cards. */}
@@ -277,6 +277,20 @@ const App: Component = () => {
           {/* Recruit reveal: chosen card to the opponent, the other to you */}
           <Show when={reveal()}>
             <RecruitReveal oppCard={reveal()!.oppCard} myCard={reveal()!.myCard} />
+          </Show>
+
+          {/* On-demand, readable Marché Noir consultation (advanced) */}
+          <Show when={currentView()!.mode === 'advanced'}>
+            <button
+              type="button"
+              class="fixed top-2 left-2 z-[45] token-gold text-[11px] px-3 py-1.5"
+              onClick={() => setShowMarket(true)}
+            >
+              Marche Noir
+            </button>
+          </Show>
+          <Show when={showMarket() && currentView()!.mode === 'advanced'}>
+            <MarketViewer view={currentView()!} onClose={() => setShowMarket(false)} />
           </Show>
         </div>
       </Show>
