@@ -49,10 +49,10 @@ test('landing exactly on a corner triggers a Marché Noir pick', () => {
   const room = advGame();
   room.market = ['cabaneObservation', 'superordinateur', 'vehiculeSurveillance'];
   room.marketDeck = ['ecranDeFumee'];
-  room.positions = { p1: 0, p2: 9 };
+  room.positions = { p1: 1, p2: 8 };
   room.inPlay = { p1: [], p2: [] };
-  p1Keeps(room, 'acolyte'); // +4 -> cell 4 (corner)
-  expect(room.positions.p1).toBe(4);
+  p1Keeps(room, 'acolyte'); // +4 -> cell 5 (corner)
+  expect(room.positions.p1).toBe(5);
   expect(room.phase).toBe('market');
   expect(room.pendingMarket).toEqual(['p1']);
   // pick the permanent in slot 0
@@ -65,10 +65,10 @@ test('landing exactly on a corner triggers a Marché Noir pick', () => {
 test('crossing a corner without stopping grants nothing', () => {
   const room = advGame();
   room.market = ['cabaneObservation', null, null];
-  room.positions = { p1: 2, p2: 9 };
+  room.positions = { p1: 3, p2: 8 };
   room.inPlay = { p1: [], p2: [] };
-  p1Keeps(room, 'acolyte'); // 2 -> 6, crosses 3 and 4 but stops on 6
-  expect(room.positions.p1).toBe(6);
+  p1Keeps(room, 'acolyte'); // 3 -> 7, crosses corner 5 but stops on 7
+  expect(room.positions.p1).toBe(7);
   expect(room.phase).toBe('play');
   expect(room.pendingMarket).toEqual([]);
 });
@@ -76,10 +76,10 @@ test('crossing a corner without stopping grants nothing', () => {
 test('retreating exactly onto a corner triggers a pick', () => {
   const room = advGame();
   room.market = ['cabaneObservation', null, null];
-  room.positions = { p1: 5, p2: 9 };
+  room.positions = { p1: 3, p2: 8 };
   room.inPlay = { p1: [], p2: [] };
-  p1Keeps(room, 'saboteur'); // -1 -> cell 4 (corner)
-  expect(room.positions.p1).toBe(4);
+  p1Keeps(room, 'saboteur'); // -1 -> cell 2 (corner)
+  expect(room.positions.p1).toBe(2);
   expect(room.phase).toBe('market');
 });
 
@@ -169,12 +169,12 @@ test('win: Système de sécurité when opponent ends on your Maison', () => {
 test('immediate: Véhicule de surveillance advances 1 after acquisition', () => {
   const room = advGame();
   room.market = ['vehiculeSurveillance', null, null];
-  room.positions = { p1: 0, p2: 9 };
+  room.positions = { p1: 1, p2: 8 };
   room.inPlay = { p1: [], p2: [] };
-  p1Keeps(room, 'acolyte'); // 0 -> 4 (corner)
+  p1Keeps(room, 'acolyte'); // 1 -> 5 (corner)
   expect(room.phase).toBe('market');
   applyAction(room, 'p1', { type: 'market', slot: 0 });
-  expect(room.positions.p1).toBe(5); // +1 from the immediate
+  expect(room.positions.p1).toBe(6); // +1 from the immediate
   expect(room.marketDiscard).toContain('vehiculeSurveillance');
   expect(room.phase).toBe('play');
 });
@@ -183,20 +183,20 @@ test('immediate: Écran de fumée recruits the top Agent card', () => {
   const room = advGame();
   room.market = ['ecranDeFumee', null, null];
   room.deck = ['mercenaire']; // pop() -> mercenaire
-  room.positions = { p1: 0, p2: 9 };
+  room.positions = { p1: 1, p2: 8 };
   room.inPlay = { p1: [], p2: [] };
-  p1Keeps(room, 'acolyte'); // 0 -> 4 (corner)
+  p1Keeps(room, 'acolyte'); // 1 -> 5 (corner)
   applyAction(room, 'p1', { type: 'market', slot: 0 });
   expect(room.inPlay.p1).toContain('mercenaire');
-  expect(room.positions.p1).toBe(5); // mercenaire 1st copy +1 from cell 4
+  expect(room.positions.p1).toBe(6); // mercenaire 1st copy +1 from cell 5
 });
 
 test('immediate interactive: Manipulation steals opponent 3rd Cryptologue', () => {
   const room = advGame();
   room.market = ['manipulationEsprit', null, null];
   room.inPlay = { p1: [], p2: ['cryptologue', 'cryptologue', 'cryptologue'] };
-  room.positions = { p1: 0, p2: 9 };
-  p1Keeps(room, 'acolyte', 'saboteur'); // p1 0 -> 4 (corner); p2 keeps 3 crypto
+  room.positions = { p1: 1, p2: 8 };
+  p1Keeps(room, 'acolyte', 'saboteur'); // p1 1 -> 5 (corner); p2 keeps 3 crypto
   expect(room.phase).toBe('market');
   applyAction(room, 'p1', { type: 'market', slot: 0 });
   expect(room.phase).toBe('capacity');
@@ -211,12 +211,12 @@ test('immediate interactive: Manipulation steals opponent 3rd Cryptologue', () =
 test('immediate interactive: Coup double recruits 1 of a pair, keeps the other', () => {
   const room = advGame();
   room.market = ['coupDouble', null, null];
-  room.positions = { p1: 0, p2: 9 };
+  room.positions = { p1: 1, p2: 8 };
   room.inPlay = { p1: [], p2: [] };
   // p1 will land on a corner; give p1 a pair in hand after the play resolves.
   room.hands.p1 = ['acolyte', 'cryptologue', 'mercenaire', 'mercenaire'];
   applyAction(room, 'p1', { type: 'play', faceUp: 'acolyte', faceDown: 'cryptologue' });
-  applyAction(room, 'p2', { type: 'recruit', choice: 'faceDown' }); // p1 keeps acolyte -> cell 4
+  applyAction(room, 'p2', { type: 'recruit', choice: 'faceDown' }); // p1 keeps acolyte -> cell 5
   // hand now refilled but still has the two mercenaires plus draws; ensure a pair exists
   room.hands.p1 = ['mercenaire', 'mercenaire', 'taupe'];
   applyAction(room, 'p1', { type: 'market', slot: 0 });
