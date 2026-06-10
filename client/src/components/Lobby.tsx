@@ -1,19 +1,20 @@
 import { Component, Show, createSignal } from 'solid-js';
-import type { PlayerView } from '../types';
-import { getBaseUrl } from '../ws';
+import type { Mode, PlayerView } from '../types';
 
 interface LobbyProps {
   view: PlayerView | null;
   code: string | null;
   onStart: () => void;
-  onCreate: () => void;
+  onCreate: (mode: Mode) => void;
   onJoin: (code: string) => void;
+  onTutorial: (mode: Mode) => void;
   isConnecting: boolean;
 }
 
 const Lobby: Component<LobbyProps> = (props) => {
   const [joinCode, setJoinCode] = createSignal('');
   const [copied, setCopied] = createSignal(false);
+  const [mode, setMode] = createSignal<Mode>('base');
 
   const shareUrl = () => {
     if (!props.code) return '';
@@ -63,14 +64,50 @@ const Lobby: Component<LobbyProps> = (props) => {
         {/* No room yet */}
         <Show when={props.code === null}>
           <div class="flex flex-col gap-4">
+            {/* Mode selector */}
+            <div class="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-spy-card border border-spy-border">
+              <button
+                type="button"
+                onClick={() => setMode('base')}
+                class={`rounded-xl py-2 text-sm font-bold transition-colors ${
+                  mode() === 'base' ? 'bg-spy-accent text-ink' : 'text-spy-muted'
+                }`}
+              >
+                Partie classique
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('advanced')}
+                class={`rounded-xl py-2 text-sm font-bold transition-colors ${
+                  mode() === 'advanced' ? 'bg-spy-accent text-ink' : 'text-spy-muted'
+                }`}
+              >
+                Partie avancee
+              </button>
+            </div>
+            <p class="text-[11px] text-spy-muted -mt-2">
+              {mode() === 'advanced'
+                ? 'Mode Avance : cartes Marche Noir aux coins du plateau.'
+                : 'Mode de Base : recrutez des agents et rattrapez l adversaire.'}
+            </p>
+
             <button
               class="btn-primary w-full text-base py-3"
-              onClick={props.onCreate}
+              onClick={() => props.onCreate(mode())}
               disabled={props.isConnecting}
               type="button"
             >
               {props.isConnecting ? 'Creation...' : 'Creer une partie'}
             </button>
+
+            <div class="flex gap-2">
+              <button class="btn-secondary flex-1 text-xs" type="button" onClick={() => props.onTutorial('base')}>
+                Tuto classique
+              </button>
+              <button class="btn-secondary flex-1 text-xs" type="button" onClick={() => props.onTutorial('advanced')}>
+                Tuto avance
+              </button>
+            </div>
 
             <div class="flex items-center gap-2 text-spy-muted text-xs">
               <div class="flex-1 h-px bg-spy-border" />
