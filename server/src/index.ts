@@ -67,11 +67,18 @@ app.use('/*', cors());
 
 app.get('/', (c) => c.json({ ok: true, service: 'agent-avenue', rooms: rooms.size }));
 
-// Create a fresh room and return its code.
-app.post('/api/create', (c) => {
+// Create a fresh room and return its code. Body may set { mode: 'base' | 'advanced' }.
+app.post('/api/create', async (c) => {
+  let mode: 'base' | 'advanced' = 'base';
+  try {
+    const body = await c.req.json();
+    if (body?.mode === 'advanced') mode = 'advanced';
+  } catch {
+    // no/invalid body -> default base
+  }
   const code = makeCode();
-  rooms.set(code, { state: createRoom(code), conns: new Map() });
-  return c.json({ code });
+  rooms.set(code, { state: createRoom(code, Math.random, mode), conns: new Map() });
+  return c.json({ code, mode });
 });
 
 // Check a room exists and report seat availability.
