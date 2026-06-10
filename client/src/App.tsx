@@ -1,9 +1,10 @@
-import { Component, Show, createSignal, onCleanup } from 'solid-js';
-import type { AgentType, PlayerView } from './types';
+import { Component, For, Show, createSignal, onCleanup } from 'solid-js';
+import type { AgentType, BlackMarketType, PlayerView } from './types';
 import { createWebSocket, sendMessage, getBaseUrl } from './ws';
 import type { ClientMessage } from './ws';
 
 import Lobby from './components/Lobby';
+import Tutorial from './components/Tutorial';
 import Board from './components/Board';
 import PlayerHand from './components/PlayerHand';
 import OpponentHand from './components/OpponentHand';
@@ -11,6 +12,9 @@ import PlayZone from './components/PlayZone';
 import ActionPanel from './components/ActionPanel';
 import DilemmaArena from './components/DilemmaArena';
 import RecruitReveal from './components/RecruitReveal';
+import Market from './components/Market';
+import MarcheNoirOverlay from './components/MarcheNoirOverlay';
+import BMCard from './components/BMCard';
 import Deck from './components/Deck';
 import Toast from './components/Toast';
 import WinBanner from './components/WinBanner';
@@ -27,6 +31,7 @@ const App: Component = () => {
   const [view, setView] = createSignal<PlayerView | null>(null);
   const [toast, setToast] = createSignal<string | null>(null);
   const [isConnecting, setIsConnecting] = createSignal(false);
+  const [tutorial, setTutorial] = createSignal<'base' | 'advanced' | null>(null);
 
   // Hand selection state
   const [selectedFaceUp, setSelectedFaceUp] = createSignal<AgentType | null>(null);
@@ -95,10 +100,14 @@ const App: Component = () => {
     ws?.close();
   });
 
-  async function handleCreate() {
+  async function handleCreate(mode: 'base' | 'advanced') {
     setIsConnecting(true);
     try {
-      const res = await fetch(`${getBaseUrl()}/api/create`, { method: 'POST' });
+      const res = await fetch(`${getBaseUrl()}/api/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode }),
+      });
       if (!res.ok) throw new Error('Echec de la creation de la partie');
       const data = (await res.json()) as { code: string };
       const code = data.code;
@@ -160,18 +169,39 @@ const App: Component = () => {
   const meId = (): 'p1' | 'p2' => currentView()?.you ?? 'p1';
   const oppId = (): 'p1' | 'p2' => (meId() === 'p1' ? 'p2' : 'p1');
 
+  // A player's Marché Noir permanent cards (advanced mode only).
+  const bmRow = (cards: BlackMarketType[]) => (
+    <Show when={currentView()?.mode === 'advanced' && cards.length > 0}>
+      <div class="flex items-center justify-center gap-1 py-0.5">
+        <For each={cards}>
+          {(c) => (
+            <div class="w-[5vh] max-w-[34px]">
+              <BMCard card={c} />
+            </div>
+          )}
+        </For>
+      </div>
+    </Show>
+  );
+
   return (
     <>
       <Toast message={toast()} />
 
+      {/* Tutorial overlay (from the lobby) */}
+      <Show when={tutorial() !== null}>
+        <Tutorial mode={tutorial()!} onClose={() => setTutorial(null)} />
+      </Show>
+
       {/* Lobby: show when no room or phase is lobby */}
-      <Show when={phase() === 'lobby' || roomCode() === null}>
+      <Show when={(phase() === 'lobby' || roomCode() === null) && tutorial() === null}>
         <Lobby
           view={currentView()}
           code={roomCode()}
           onStart={() => handleSend({ type: 'start' })}
           onCreate={handleCreate}
           onJoin={handleJoin}
+          onTutorial={(m) => setTutorial(m)}
           isConnecting={isConnecting()}
         />
       </Show>
@@ -183,10 +213,12 @@ const App: Component = () => {
           class="grid mx-auto max-w-3xl overflow-hidden"
           style={{ height: '100dvh', 'grid-template-rows': 'auto minmax(0,1fr) auto' }}
         >
-          {/* TOP ZONE: opponent's card backs + their recruited cards */}
+          {/* TOP ZONE: opponent's card backs + their recruited cards + Marché Noir */}
           <header class="pt-2 flex flex-col">
             <OpponentHand count={currentView()!.oppHandCount} />
             <PlayZone cards={currentView()!.inPlay[oppId()]} label="Adversaire" mine={false} />
+            {bmRow(currentView()!.blackMarket[oppId()])}
+            <Market view={currentView()!} />
           </header>
 
           {/* CENTER ZONE: the plateau, kept clear of the recruited cards. */}
@@ -197,6 +229,14 @@ const App: Component = () => {
               <DilemmaArena
                 view={currentView()!}
                 onRecruit={(choice) => handleSend({ type: 'recruit', choice })}
+              />
+            </Show>
+
+            <Show when={phase() === 'market' || phase() === 'capacity'}>
+              <MarcheNoirOverlay
+                view={currentView()!}
+                onPick={(slot) => handleSend({ type: 'market', slot })}
+                onCapacity={(agent, recruit) => handleSend({ type: 'capacity', agent, recruit })}
               />
             </Show>
 
@@ -212,6 +252,7 @@ const App: Component = () => {
 
           {/* BOTTOM ZONE: your recruited cards + action tokens + fanned hand */}
           <footer class="pb-[max(0.5rem,env(safe-area-inset-bottom))] flex flex-col gap-1">
+            {bmRow(currentView()!.blackMarket[meId()])}
             <PlayZone cards={currentView()!.inPlay[meId()]} label="Vous" mine={true} />
             <ActionPanel
               view={currentView()!}
