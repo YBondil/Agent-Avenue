@@ -8,6 +8,8 @@ export type ClientMessage =
   | { type: 'start' }
   | { type: 'play'; faceUp: import('./types').AgentType; faceDown: import('./types').AgentType }
   | { type: 'recruit'; choice: 'faceUp' | 'faceDown' }
+  | { type: 'market'; slot: number }
+  | { type: 'capacity'; agent?: import('./types').AgentType; recruit?: boolean }
   | { type: 'reset' };
 
 function getOrCreateClientId(): string {
