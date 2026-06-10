@@ -1,4 +1,4 @@
-import { Component, For, createEffect, createMemo, createSignal, onCleanup } from 'solid-js';
+import { Component, For, Show, createEffect, createMemo, createSignal, onCleanup } from 'solid-js';
 import type { PlayerId, PlayerView } from '../types';
 import { BOARD_CELLS } from '../constants';
 
@@ -155,16 +155,29 @@ const Board: Component<BoardProps> = (props) => {
         <g transform={`translate(${cellPoint(0).x}, ${cellPoint(0).y})`}>{House('p1', false)}</g>
         <g transform={`translate(${cellPoint(7).x}, ${cellPoint(7).y})`}>{House('p2', true)}</g>
 
-        {/* Cell sockets */}
+        {/* Cell sockets. In advanced mode the 4 corners are Marché Noir cases. */}
         <For each={cells()}>
-          {(cell) => (
-            <g transform={`translate(${cell.x}, ${cell.y})`}>
-              <circle r="9" fill="#0e1a30" stroke="#3a577f" stroke-width="1.5" />
-              <text text-anchor="middle" y="3" font-size="8" font-weight="700" fill="#6f8cb8">
-                {cell.i}
-              </text>
-            </g>
-          )}
+          {(cell) => {
+            const isMN = () => props.view.mode === 'advanced' && [3, 4, 10, 11].includes(cell.i);
+            return (
+              <g transform={`translate(${cell.x}, ${cell.y})`}>
+                <circle
+                  r={isMN() ? 11 : 9}
+                  fill={isMN() ? '#2a210e' : '#0e1a30'}
+                  stroke={isMN() ? '#e8c170' : '#3a577f'}
+                  stroke-width={isMN() ? 2 : 1.5}
+                />
+                <Show when={isMN()}>
+                  <text text-anchor="middle" y="-13" font-size="8" font-weight="800" fill="#e8c170">
+                    MN
+                  </text>
+                </Show>
+                <text text-anchor="middle" y="3" font-size="8" font-weight="700" fill={isMN() ? '#e8c170' : '#6f8cb8'}>
+                  {cell.i}
+                </text>
+              </g>
+            );
+          }}
         </For>
 
         {/* Pawns: spy chips hopping cell by cell along the track. */}
