@@ -8,7 +8,7 @@ import {
   mod14,
 } from './game';
 import { applyAction, createRoom, startGame, viewFor } from './engine';
-import type { RoomState } from './types';
+import type { AgentType, RoomState } from './types';
 
 test('deck has 38 cards with correct composition', () => {
   const deck = buildDeck();
@@ -37,6 +37,33 @@ test('effect table matches the card sprites', () => {
     .toEqual([0, 2, 6]);
   expect(deltaFor('acolyte', 1)).toBe(4);
   expect(deltaFor('taupe', 1)).toBe(-3);
+});
+
+// End-to-end: recruiting the first copy of each agent moves the pawn exactly the
+// README amount (locks down e.g. risque-tout 1x = +2, not +3).
+test('first-copy recruit moves the pawn by the README value', () => {
+  const expected: Record<AgentType, number> = {
+    agentDouble: -1,
+    saboteur: -1,
+    mercenaire: 1,
+    risqueTout: 2,
+    cryptologue: 0,
+    sentinelle: 0,
+    acolyte: 4,
+    taupe: -3,
+  };
+  (Object.keys(expected) as AgentType[]).forEach((type) => {
+    const room = newGame();
+    const filler: AgentType = type === 'cryptologue' ? 'saboteur' : 'cryptologue';
+    room.inPlay = { p1: [], p2: [] };
+    room.hands.p1 = [type, filler, filler, filler];
+    room.positions = { p1: 0, p2: 7 };
+    applyAction(room, 'p1', { type: 'play', faceUp: type, faceDown: filler });
+    // p2 recruits the filler -> p1 keeps `type` as its first copy.
+    applyAction(room, 'p2', { type: 'recruit', choice: 'faceDown' });
+    expect(room.inPlay.p1).toEqual([type]);
+    expect(room.positions.p1).toBe(mod14(0 + expected[type]));
+  });
 });
 
 test('mod14 wraps both directions', () => {
