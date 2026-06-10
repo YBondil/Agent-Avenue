@@ -13,14 +13,44 @@ export type AgentType =
 
 export type PlayerId = 'p1' | 'p2';
 
-export type Phase = 'lobby' | 'play' | 'recruit' | 'ended';
+export type Mode = 'base' | 'advanced';
 
-export type WinReason = 'catch' | '3-crypto' | '3-risque' | 'hand-empty';
+// Marché Noir cards (Mode Avancé). See reports/marche-noir-cards.md.
+export type BlackMarketType =
+  | 'cheffeDeMeute'
+  | 'planDesOperations'
+  | 'systemeDeSecurite'
+  | 'fuiteEnVoiture'
+  | 'cabaneObservation'
+  | 'superordinateur'
+  | 'dispositifDiversion'
+  | 'jumelleMalefique'
+  | 'vehiculeSurveillance'
+  | 'ecranDeFumee'
+  | 'avantPoste'
+  | 'recrueSecrete'
+  | 'coupDouble'
+  | 'petitRepos'
+  | 'manipulationEsprit';
+
+// 'market' = a player must pick a Marché Noir card; 'capacity' = an interactive
+// immediate capability awaits the player's choice.
+export type Phase = 'lobby' | 'play' | 'recruit' | 'market' | 'capacity' | 'ended';
+
+export type WinReason =
+  | 'catch'
+  | '3-crypto'
+  | '3-risque'
+  | 'hand-empty'
+  | '3-risque-meute' // Cheffe de meute: 3 Risque-tout wins
+  | '7-agents' // Plan des opérations
+  | 'maison'; // Système de sécurité
 
 // Authoritative server-side room state. Never sent verbatim to a client
 // (it would leak hands and the face-down card); use `viewFor` instead.
 export type RoomState = {
   code: string;
+  mode: Mode;
   players: { p1: string | null; p2: string | null }; // role -> client id
   deck: AgentType[];
   hands: { p1: AgentType[]; p2: AgentType[] };
@@ -33,6 +63,17 @@ export type RoomState = {
   winner: PlayerId | null;
   winReason?: WinReason;
   createdAt: number;
+
+  // --- Mode Avancé only ---
+  marketDeck: BlackMarketType[];          // face-down Marché Noir pile
+  market: (BlackMarketType | null)[];     // 3 face-up slots (null if pile dry)
+  marketDiscard: BlackMarketType[];
+  blackMarket: { p1: BlackMarketType[]; p2: BlackMarketType[] }; // permanents in play
+  pendingMarket: PlayerId[];              // players owed a Marché Noir pick (FIFO)
+  pendingCapacity: { player: PlayerId; card: BlackMarketType } | null;
+  // Catch flags accumulated during a turn, resolved once the market/capacity
+  // sub-steps finish (win is only decided at "Terminer le tour").
+  pendingCaught: { p1: boolean; p2: boolean };
 };
 
 // Redacted, per-player projection of RoomState sent over the WebSocket.
@@ -52,6 +93,17 @@ export type PlayerView = {
   proposed: { faceUp: AgentType; faceDown: AgentType | null } | null;
   winner: PlayerId | null;
   winReason?: WinReason;
+
+  // --- Mode Avancé only ---
+  mode: Mode;
+  market: (BlackMarketType | null)[];
+  marketDeckCount: number;
+  blackMarket: { p1: BlackMarketType[]; p2: BlackMarketType[] };
+  pendingMarket: PlayerId | null; // who must currently pick from the market
+  // When an interactive immediate capability awaits you, the eligible choices.
+  pendingCapacity:
+    | { player: PlayerId; card: BlackMarketType; agents: AgentType[]; optional: boolean }
+    | null;
 };
 
 // Messages: client -> server
@@ -59,6 +111,8 @@ export type ClientMessage =
   | { type: 'start' }
   | { type: 'play'; faceUp: AgentType; faceDown: AgentType }
   | { type: 'recruit'; choice: 'faceUp' | 'faceDown' }
+  | { type: 'market'; slot: number } // pick a Marché Noir card (advanced)
+  | { type: 'capacity'; agent?: AgentType; recruit?: boolean } // resolve interactive immediate
   | { type: 'reset' };
 
 // Messages: server -> client
